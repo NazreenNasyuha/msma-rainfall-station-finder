@@ -32,7 +32,7 @@ const App = (() => {
    * Get the active station list based on current mode
    */
   const getActiveStations = () => {
-    return currentMode === "highari" ? HIGH_ARI_STATIONS : STATIONS;
+    return currentMode === "highari" ? LOW_ARI_STATIONS : STATIONS;
   };
 
   /**
@@ -96,12 +96,12 @@ const App = (() => {
     const formulaNote = document.getElementById("formulaNote");
 
     if (isHighARI) {
-      eqLabel.textContent = "High ARI IDF Equation (Appendix 13.A)";
+      eqLabel.textContent = "Low ARI IDF Equation (Appendix 13.A)";
       eqFormula.innerHTML = "I<sub>T</sub>(t) = λ × t<sup>−κ</sup> × [1 + θ × K<sub>T</sub>]<sup>η</sup>";
       eqDesc.innerHTML = "λ, κ, θ, η = Station coefficients &nbsp;|&nbsp; K<sub>T</sub> = Gumbel frequency factor &nbsp;|&nbsp; t = Duration (min), valid 30–1000 min";
       idfTableHead.innerHTML = "<tr><th>ARI (yr)</th><th>λ</th><th>κ</th><th>θ</th><th>η</th></tr>";
       calcARILabel.textContent = "Average Recurrence Interval (ARI)";
-      formulaNote.innerHTML = "<strong>📝 Note:</strong> The High ARI formula uses Lambda (λ), Kappa (κ), Theta (θ), and Eta (η) coefficients. Valid for 30 ≤ t ≤ 1000 min. K<sub>T</sub> = −ln(−ln(1 − 1/T)) from Gumbel distribution.";
+      formulaNote.innerHTML = "<strong>📝 Note:</strong> The Low ARI formula uses Lambda (λ), Kappa (κ), Theta (θ), and Eta (η) coefficients. Valid for 30 ≤ t ≤ 1000 min. K<sub>T</sub> = −ln(−ln(1 − 1/T)) from Gumbel distribution.";
     } else {
       eqLabel.textContent = "MSMA 2nd Edition IDF Polynomial (Eq. 13.2)";
       eqFormula.innerHTML = "ln(RI<sub>t</sub>) = a + b·ln(t) + c·[ln(t)]² + d·[ln(t)]³";

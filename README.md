@@ -2,7 +2,7 @@
 
 Find the nearest Malaysian rainfall stations, view IDF curves, and calculate rainfall intensity for stormwater design.
 
-**🔗 [Live Demo](https://your-username.github.io/msma-rainfall-station-finder/)**
+**🔗 [Live Demo](https://nazreennasyuha.github.io/msma-rainfall-station-finder/)**
 
 ## How to Use
 
@@ -14,11 +14,19 @@ Find the nearest Malaysian rainfall stations, view IDF curves, and calculate rai
 
 ## Features
 
-- **Station Finder** — Haversine distance calculation to 65+ stations
-- **Interactive Map** — Leaflet.js with markers and distance lines
-- **IDF Curves** — Chart.js visualization (log-log scale)
+- **Station Finder** — Haversine distance calculation to 200+ stations
+- **Interactive Map** — Leaflet.js with markers, distance lines, and region filters
+- **IDF Curves** — Chart.js log-log visualization for all ARI values
 - **IDF Calculator** — Rainfall intensity (mm/hr) for 30–1000 min duration
+- **Two IDF Modes** — Standard polynomial & Low ARI (λ, κ, θ, η)
 - **East Malaysia** — Includes Sabah & Sarawak stations (SUStoM data)
+
+## IDF Modes
+
+| Mode | Coefficients | Equation | Coverage |
+|------|-------------|----------|----------|
+| **Standard** | a, b, c, d | ln(RI_t) = a + b·ln(t) + c·[ln(t)]² + d·[ln(t)]³ | 35 urban centres |
+| **Low ARI** | λ, κ, θ, η | I_T(t) = λ × t^(-κ) × [1 + θ × K_T]^η | 150+ extended stations |
 
 ## Data Sources
 
@@ -26,6 +34,7 @@ Find the nearest Malaysian rainfall stations, view IDF curves, and calculate rai
 |--------|----------|------|
 | MSMA 2nd Edition | Peninsular Malaysia (40+ stations) | 2012 |
 | SUStoM / HP26 | Sabah (14) & Sarawak (12) | 2018 |
+| Appendix 13.A | Extended station network (150+ stations) | 2012 |
 
 ## Disclaimer
 

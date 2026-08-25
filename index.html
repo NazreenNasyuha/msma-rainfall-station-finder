@@ -38,7 +38,7 @@
           cursor:pointer;min-width:280px
         ">
           <option value="standard">Standard MSMA — Polynomial (a, b, c, d) — Urban Centres</option>
-          <option value="highari">High ARI — λ, κ, θ, η — Extended Station Network (150+)</option>
+          <option value="highari">Low ARI — λ, κ, θ, η — Extended Station Network (150+)</option>
         </select>
         <span style="color:#888;font-size:.85rem" id="modeHint">35 urban centres, 6 ARIs (2–100 yr)</span>
       </div>
@@ -124,7 +124,7 @@
         <h2 class="card-title">📈 IDF Coefficients — Nearest Station</h2>
 
         <div class="idf-equation">
-          <p style="color:#888;font-size:.85rem;margin-bottom:6px" id="eqLabel">MSMA 2nd Edition IDF Polynomial (Eq. 13.2)</p>
+          <p style="color:#888;font-size:.85rem;margin-bottom:6px" id="eqLabel">MSMA 2nd Edition IDF Polynomial (Eq. 13.2) — Standard</p>
           <div class="equation" id="eqFormula">ln(RI<sub>t</sub>) = a + b·ln(t) + c·[ln(t)]² + d·[ln(t)]³</div>
           <p style="color:#888;font-size:.8rem;margin-top:6px" id="eqDesc">RI<sub>t</sub> = Rainfall Intensity (mm/hr), t = Duration (min), valid 30–1000 min, ARI 2–100 years</p>
         </div>
@@ -206,7 +206,7 @@
   <!-- SCRIPTS (order matters)                            -->
   <!-- ═══════════════════════════════════════════════════ -->
   <script src="js/stations.js"></script>
-  <script src="js/high-ari-stations.js"></script>
+  <script src="js/low-ari-stations.js"></script>
   <script src="js/haversine.js"></script>
   <script src="js/idf-calculator.js"></script>
   <script src="js/map.js"></script>
@@ -217,7 +217,7 @@
     document.getElementById("modeSwitch").addEventListener("change", function() {
       const hint = document.getElementById("modeHint");
       if (this.value === "highari") {
-        hint.textContent = "150+ stations, Lambda/Kappa/Theta/Eta coefficients";
+        hint.textContent = "150+ stations, Lambda/Kappa/Theta/Eta coefficients (Low ARI)";
       } else {
         hint.textContent = "35 urban centres, 6 ARIs (2–100 yr)";
       }
