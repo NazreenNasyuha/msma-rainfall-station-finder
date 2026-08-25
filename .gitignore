@@ -2,6 +2,7 @@
 .DS_Store
 Thumbs.db
 Desktop.ini
+ehthumbs.db
 
 # Editor files
 .vscode/
@@ -9,10 +10,21 @@ Desktop.ini
 *.swp
 *.swo
 *~
+*.sublime-*
+
+# Node (if used)
+node_modules/
+package-lock.json
 
 # Logs
 *.log
+npm-debug.log*
 
 # Temporary files
 *.tmp
 *.bak
+*.orig
+
+# Build artifacts
+dist/
+build/

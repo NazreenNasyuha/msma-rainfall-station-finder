@@ -1,0 +1,563 @@
+/* ═══════════════════════════════════════════════════════════
+   MSMA Rainfall Station Finder — Stylesheet
+   ═══════════════════════════════════════════════════════════ */
+
+/* --- Reset & Base --- */
+*,
+*::before,
+*::after {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+:root {
+  --primary: #1a5276;
+  --primary-light: #2980b9;
+  --accent: #3498db;
+  --success: #27ae60;
+  --warning: #f39c12;
+  --danger: #e74c3c;
+  --bg: #f0f4f8;
+  --card: #ffffff;
+  --text: #2c3e50;
+  --text-muted: #7f8c8d;
+  --border: #dde1e6;
+  --radius: 14px;
+  --shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
+  --shadow-lg: 0 8px 30px rgba(0, 0, 0, 0.12);
+  --transition: 0.2s ease;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  font-family: "Segoe UI", system-ui, -apple-system, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  line-height: 1.5;
+  min-height: 100vh;
+}
+
+/* --- Layout --- */
+.container {
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 15px;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+}
+
+@media (max-width: 960px) {
+  .grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* --- Header --- */
+header {
+  background: linear-gradient(135deg, var(--primary) 0%, var(--primary-light) 100%);
+  color: #fff;
+  border-radius: var(--radius);
+  padding: 28px 30px;
+  margin-bottom: 20px;
+  text-align: center;
+}
+
+header h1 {
+  font-size: 2rem;
+  font-weight: 700;
+  margin-bottom: 6px;
+}
+
+header p {
+  opacity: 0.9;
+  font-size: 1rem;
+}
+
+/* --- Card --- */
+.card {
+  background: var(--card);
+  border-radius: var(--radius);
+  padding: 22px;
+  box-shadow: var(--shadow);
+}
+
+.card-title {
+  color: var(--primary);
+  font-size: 1.2rem;
+  font-weight: 700;
+  margin-bottom: 16px;
+  padding-bottom: 10px;
+  border-bottom: 2px solid var(--accent);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* --- Form Inputs --- */
+.input-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+  margin-bottom: 14px;
+}
+
+@media (max-width: 500px) {
+  .input-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.input-group label {
+  display: block;
+  margin-bottom: 5px;
+  font-weight: 600;
+  font-size: 0.88rem;
+  color: var(--text);
+}
+
+.input-group input,
+.input-group select {
+  width: 100%;
+  padding: 10px 14px;
+  border: 2px solid var(--border);
+  border-radius: 10px;
+  font-size: 0.95rem;
+  font-family: inherit;
+  transition: border-color var(--transition), box-shadow var(--transition);
+  background: #fff;
+}
+
+.input-group input:focus,
+.input-group select:focus {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.15);
+}
+
+.hint {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  margin-top: 3px;
+}
+
+/* --- Buttons --- */
+.btn {
+  padding: 11px 24px;
+  border: none;
+  border-radius: 10px;
+  font-size: 0.95rem;
+  font-weight: 600;
+  font-family: inherit;
+  cursor: pointer;
+  transition: all var(--transition);
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+}
+
+.btn:active {
+  transform: scale(0.97);
+}
+
+.btn-primary {
+  background: linear-gradient(135deg, var(--primary-light), var(--primary));
+  color: #fff;
+}
+
+.btn-primary:hover {
+  box-shadow: 0 4px 14px rgba(41, 128, 185, 0.35);
+  transform: translateY(-1px);
+}
+
+.btn-secondary {
+  background: #e8f4fc;
+  color: var(--primary);
+  border: 2px solid var(--primary-light);
+}
+
+.btn-secondary:hover {
+  background: var(--primary-light);
+  color: #fff;
+}
+
+.btn-success {
+  background: var(--success);
+  color: #fff;
+}
+
+.btn-success:hover {
+  background: #219a52;
+}
+
+.btn-group {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+/* --- Quick Location Buttons --- */
+.quick-locations {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 7px;
+  margin: 8px 0;
+}
+
+.quick-btn {
+  padding: 5px 13px;
+  background: #e8f4fc;
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  cursor: pointer;
+  font-size: 0.8rem;
+  font-family: inherit;
+  transition: all var(--transition);
+}
+
+.quick-btn:hover {
+  background: var(--accent);
+  color: #fff;
+  border-color: var(--accent);
+}
+
+/* --- Map --- */
+#map {
+  height: 440px;
+  border-radius: 12px;
+  margin: 14px 0;
+  border: 2px solid var(--border);
+}
+
+.filter-row {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-bottom: 10px;
+}
+
+.filter-btn {
+  padding: 5px 14px;
+  border: 2px solid var(--border);
+  border-radius: 16px;
+  background: #fff;
+  cursor: pointer;
+  font-size: 0.82rem;
+  font-family: inherit;
+  transition: all var(--transition);
+}
+
+.filter-btn.active {
+  background: var(--primary-light);
+  color: #fff;
+  border-color: var(--primary-light);
+}
+
+.filter-btn:hover {
+  border-color: var(--primary-light);
+}
+
+/* --- Legend --- */
+.legend {
+  display: flex;
+  gap: 14px;
+  flex-wrap: wrap;
+  margin: 8px 0;
+  font-size: 0.8rem;
+  color: var(--text-muted);
+}
+
+.legend-item {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.legend-dot {
+  width: 11px;
+  height: 11px;
+  border-radius: 50%;
+  border: 2px solid #fff;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+}
+
+/* --- Results Section --- */
+.results {
+  display: none;
+}
+
+.results.active {
+  display: block;
+}
+
+/* --- Station Card --- */
+.station-card {
+  background: var(--card);
+  border-radius: 12px;
+  padding: 18px;
+  margin-bottom: 14px;
+  border-left: 4px solid var(--accent);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+  transition: transform var(--transition);
+}
+
+.station-card:hover {
+  transform: translateX(6px);
+}
+
+.station-card.nearest {
+  border-left-color: var(--success);
+  background: linear-gradient(135deg, #f0fff4, #e6f9ec);
+}
+
+.station-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 4px;
+}
+
+.station-name {
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: var(--primary);
+}
+
+.station-region {
+  color: var(--text-muted);
+  font-size: 0.82rem;
+  margin-left: 6px;
+}
+
+.station-id {
+  background: var(--primary-light);
+  color: #fff;
+  padding: 2px 10px;
+  border-radius: 14px;
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.distance-badge {
+  background: var(--success);
+  color: #fff;
+  padding: 5px 16px;
+  border-radius: 20px;
+  font-size: 0.9rem;
+  font-weight: 700;
+}
+
+.station-info {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 10px;
+  margin-top: 12px;
+}
+
+.info-item {
+  background: #f7f9fc;
+  padding: 8px 12px;
+  border-radius: 8px;
+}
+
+.info-label {
+  font-size: 0.72rem;
+  color: var(--text-muted);
+  margin-bottom: 2px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.info-value {
+  font-size: 0.88rem;
+  font-weight: 600;
+}
+
+/* --- IDF Section --- */
+.idf-section {
+  background: linear-gradient(135deg, #f8f9fa, #eef1f5);
+  border-radius: var(--radius);
+  padding: 22px;
+  margin-top: 20px;
+}
+
+.idf-equation {
+  background: #fff;
+  padding: 16px;
+  border-radius: 10px;
+  text-align: center;
+  margin: 12px 0;
+  border: 2px solid var(--accent);
+}
+
+.equation {
+  font-family: "Cambria Math", "Times New Roman", serif;
+  font-size: 1.1rem;
+  color: var(--primary);
+}
+
+/* --- Coefficient Grid --- */
+.coeff-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 10px;
+  margin: 14px 0;
+}
+
+@media (max-width: 600px) {
+  .coeff-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+.coeff-card {
+  background: #fff;
+  padding: 14px;
+  border-radius: 10px;
+  text-align: center;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+}
+
+.coeff-symbol {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--primary-light);
+  font-family: "Cambria Math", serif;
+}
+
+.coeff-name {
+  font-size: 0.72rem;
+  color: var(--text-muted);
+  margin: 3px 0;
+}
+
+.coeff-value {
+  font-size: 1.05rem;
+  font-weight: 700;
+}
+
+/* --- IDF Table --- */
+.idf-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 14px;
+  background: #fff;
+  border-radius: 10px;
+  overflow: hidden;
+}
+
+.idf-table th {
+  background: var(--primary);
+  color: #fff;
+  padding: 10px;
+  text-align: center;
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+.idf-table td {
+  padding: 8px;
+  text-align: center;
+  border-bottom: 1px solid #eee;
+  font-size: 0.85rem;
+}
+
+.idf-table tr:nth-child(even) {
+  background: #f7f9fc;
+}
+
+.idf-table tr:hover {
+  background: #e8f4fc;
+}
+
+/* --- IDF Chart --- */
+.chart-container {
+  position: relative;
+  height: 350px;
+  margin: 16px 0;
+  background: #fff;
+  border-radius: 12px;
+  padding: 16px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+}
+
+/* --- IDF Calculator --- */
+.calc-result {
+  background: linear-gradient(135deg, var(--success), #2ecc71);
+  color: #fff;
+  border-radius: 12px;
+  padding: 20px;
+  text-align: center;
+  margin-top: 16px;
+  display: none;
+}
+
+.calc-result.active {
+  display: block;
+}
+
+.calc-result h3 {
+  font-size: 2rem;
+  margin: 8px 0;
+}
+
+.calc-result p {
+  opacity: 0.9;
+  font-size: 0.9rem;
+}
+
+/* --- Formula Note --- */
+.formula-note {
+  background: #fff3cd;
+  border-left: 4px solid var(--warning);
+  padding: 12px 16px;
+  border-radius: 0 10px 10px 0;
+  margin-top: 14px;
+  font-size: 0.85rem;
+  line-height: 1.5;
+}
+
+.formula-note strong {
+  color: #e67e22;
+}
+
+/* --- Footer --- */
+footer {
+  text-align: center;
+  padding: 24px 16px;
+  color: var(--text-muted);
+  font-size: 0.85rem;
+  line-height: 1.6;
+}
+
+footer strong {
+  color: var(--primary);
+}
+
+/* --- Scrollbar --- */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: #f1f1f1;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #ccc;
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #aaa;
+}

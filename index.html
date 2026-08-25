@@ -1,392 +1,194 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>MSMA Rainfall Station Finder | IDF Calculator</title>
-    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-    <style>
-        *{margin:0;padding:0;box-sizing:border-box}
-        body{font-family:'Segoe UI',Tahoma,sans-serif;background:#f0f4f8;color:#2c3e50}
-        .container{max-width:1400px;margin:0 auto;padding:15px}
-        header{background:linear-gradient(135deg,#1a5276,#2980b9);color:#fff;border-radius:16px;padding:25px;margin-bottom:20px;text-align:center}
-        header h1{font-size:2rem;margin-bottom:8px}
-        header p{opacity:.9;font-size:1rem}
-        .grid{display:grid;grid-template-columns:1fr 1fr;gap:20px}
-        @media(max-width:900px){.grid{grid-template-columns:1fr}}
-        .card{background:#fff;border-radius:14px;padding:22px;box-shadow:0 2px 12px rgba(0,0,0,.08)}
-        .card-title{color:#1a5276;font-size:1.25rem;margin-bottom:16px;padding-bottom:8px;border-bottom:2px solid #3498db;display:flex;align-items:center;gap:8px}
-        .input-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:16px}
-        .input-group label{display:block;margin-bottom:6px;font-weight:600;font-size:.9rem}
-        .input-group input,.input-group select{width:100%;padding:10px 14px;border:2px solid #dde;border-radius:10px;font-size:.95rem;transition:.2s}
-        .input-group input:focus,.input-group select:focus{outline:none;border-color:#3498db;box-shadow:0 0 0 3px rgba(52,152,219,.15)}
-        .hint{font-size:.75rem;color:#888;margin-top:3px}
-        .btn{padding:11px 24px;border:none;border-radius:10px;font-size:.95rem;font-weight:600;cursor:pointer;transition:.2s;display:inline-flex;align-items:center;gap:7px}
-        .btn-primary{background:linear-gradient(135deg,#2980b9,#1a5276);color:#fff}
-        .btn-primary:hover{transform:translateY(-1px);box-shadow:0 4px 12px rgba(41,128,185,.35)}
-        .btn-secondary{background:#e8f4fc;color:#1a5276;border:2px solid #2980b9}
-        .btn-secondary:hover{background:#2980b9;color:#fff}
-        .btn-success{background:#27ae60;color:#fff}
-        .btn-success:hover{background:#219a52}
-        .btn-group{display:flex;gap:10px;flex-wrap:wrap}
-        .quick-loc{display:flex;flex-wrap:wrap;gap:8px;margin:10px 0}
-        .quick-btn{padding:6px 13px;background:#e8f4fc;border:1px solid #ccd;border-radius:16px;cursor:pointer;font-size:.82rem;transition:.2s}
-        .quick-btn:hover{background:#3498db;color:#fff;border-color:#3498db}
-        .results{display:none}.results.active{display:block}
-        .station-card{background:#fff;border-radius:12px;padding:18px;margin-bottom:14px;border-left:4px solid #3498db;box-shadow:0 2px 8px rgba(0,0,0,.06);transition:.2s}
-        .station-card:hover{transform:translateX(6px)}
-        .station-card.nearest{border-left-color:#27ae60;background:linear-gradient(135deg,#f0fff4,#e6f9ec)}
-        .station-header{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px}
-        .station-name{font-size:1.1rem;font-weight:700;color:#1a5276}
-        .station-id{background:#2980b9;color:#fff;padding:3px 10px;border-radius:14px;font-size:.78rem;font-weight:600}
-        .distance-badge{background:#27ae60;color:#fff;padding:6px 16px;border-radius:20px;font-size:.95rem;font-weight:700}
-        .station-info{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:10px;margin-top:12px}
-        .info-item{background:#f7f9fc;padding:8px 12px;border-radius:8px}
-        .info-label{font-size:.72rem;color:#888;margin-bottom:2px}
-        .info-value{font-size:.88rem;font-weight:600}
-        #map{height:420px;border-radius:12px;margin:16px 0;border:2px solid #dde}
-        .idf-calc{background:linear-gradient(135deg,#f8f9fa,#eef1f5);border-radius:14px;padding:22px;margin-top:16px}
-        .idf-equation{background:#fff;padding:16px;border-radius:10px;text-align:center;margin:12px 0;border:2px solid #3498db}
-        .equation{font-family:'Cambria Math','Times New Roman',serif;font-size:1.15rem;color:#1a5276}
-        .coeff-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin:14px 0}
-        .coeff-card{background:#fff;padding:14px;border-radius:10px;text-align:center;box-shadow:0 2px 8px rgba(0,0,0,.06)}
-        .coeff-symbol{font-size:1.5rem;font-weight:700;color:#2980b9}
-        .coeff-name{font-size:.75rem;color:#888;margin:3px 0}
-        .coeff-value{font-size:1.1rem;font-weight:700}
-        .idf-table{width:100%;border-collapse:collapse;margin-top:14px;background:#fff;border-radius:10px;overflow:hidden}
-        .idf-table th{background:#1a5276;color:#fff;padding:10px;text-align:center;font-size:.85rem}
-        .idf-table td{padding:8px;text-align:center;border-bottom:1px solid #eee;font-size:.85rem}
-        .idf-table tr:nth-child(even){background:#f7f9fc}
-        .idf-table tr:hover{background:#e8f4fc}
-        .calc-result{background:linear-gradient(135deg,#27ae60,#2ecc71);color:#fff;border-radius:12px;padding:20px;text-align:center;margin-top:16px;display:none}
-        .calc-result.active{display:block}
-        .calc-result h3{font-size:2rem;margin:8px 0}
-        .calc-result p{opacity:.9}
-        .formula-note{background:#fff3cd;border-left:4px solid #f39c12;padding:12px 16px;border-radius:0 10px 10px 0;margin-top:14px;font-size:.85rem}
-        .legend-map{display:flex;gap:14px;flex-wrap:wrap;margin:10px 0;font-size:.82rem}
-        .legend-item{display:flex;align-items:center;gap:5px}
-        .legend-dot{width:12px;height:12px;border-radius:50%;border:2px solid #fff;box-shadow:0 1px 3px rgba(0,0,0,.3)}
-        .filter-row{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:14px}
-        .filter-btn{padding:6px 14px;border:2px solid #ccd;border-radius:16px;background:#fff;cursor:pointer;font-size:.82rem;transition:.2s}
-        .filter-btn.active{background:#2980b9;color:#fff;border-color:#2980b9}
-        .filter-btn:hover{border-color:#2980b9}
-        footer{text-align:center;padding:20px;color:#888;font-size:.85rem}
-        @media(max-width:600px){.input-grid{grid-template-columns:1fr}.coeff-grid{grid-template-columns:repeat(2,1fr)}header h1{font-size:1.5rem}}
-    </style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MSMA Rainfall Station Finder | IDF Calculator</title>
+
+  <!-- Leaflet.js -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+  <!-- Chart.js -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+
+  <!-- App Stylesheet -->
+  <link rel="stylesheet" href="css/styles.css" />
 </head>
 <body>
-<div class="container">
+  <div class="container">
+
+    <!-- ═══════════════════════════════════════════════════ -->
+    <!-- HEADER                                             -->
+    <!-- ═══════════════════════════════════════════════════ -->
     <header>
-        <h1>🌧️ MSMA Rainfall Station Finder</h1>
-        <p>MSMA 2nd Edition & SUStoM — Find nearest stations, IDF coefficients & calculate rainfall intensity</p>
+      <h1>🌧️ MSMA Rainfall Station Finder</h1>
+      <p>MSMA 2nd Edition &amp; SUStoM — Find nearest stations, view IDF curves &amp; calculate rainfall intensity</p>
     </header>
 
-    <!-- Input & Map -->
+    <!-- ═══════════════════════════════════════════════════ -->
+    <!-- INPUT + MAP GRID                                   -->
+    <!-- ═══════════════════════════════════════════════════ -->
     <div class="grid">
-        <div class="card">
-            <h2 class="card-title">📍 Project Site Coordinates</h2>
-            <div class="input-grid">
-                <div class="input-group">
-                    <label>Latitude (°N)</label>
-                    <input type="number" id="lat" placeholder="e.g., 3.1390" step="0.0001">
-                </div>
-                <div class="input-group">
-                    <label>Longitude (°E)</label>
-                    <input type="number" id="lon" placeholder="e.g., 101.6869" step="0.0001">
-                </div>
-            </div>
-            <div class="input-group" style="margin-bottom:12px">
-                <label>Quick Locations</label>
-                <div class="quick-loc">
-                    <button class="quick-btn" onclick="setLoc(3.139,101.687)">KL</button>
-                    <button class="quick-btn" onclick="setLoc(3.073,101.493)">Shah Alam</button>
-                    <button class="quick-btn" onclick="setLoc(4.598,101.090)">Ipoh</button>
-                    <button class="quick-btn" onclick="setLoc(5.416,100.333)">Penang</button>
-                    <button class="quick-btn" onclick="setLoc(1.485,103.762)">Johor Bahru</button>
-                    <button class="quick-btn" onclick="setLoc(6.121,102.294)">Kota Bharu</button>
-                    <button class="quick-btn" onclick="setLoc(5.975,116.070)">Kota Kinabalu</button>
-                    <button class="quick-btn" onclick="setLoc(1.553,110.357)">Kuching</button>
-                    <button class="quick-btn" onclick="setLoc(4.399,118.396)">Tawau</button>
-                    <button class="quick-btn" onclick="setLoc(3.237,113.036)">Sibu</button>
-                    <button class="quick-btn" onclick="setLoc(4.883,114.939)">Miri</button>
-                    <button class="quick-btn" onclick="setLoc(3.817,103.333)">Kuantan</button>
-                </div>
-            </div>
-            <div class="btn-group">
-                <button class="btn btn-primary" onclick="calcDist()">🔍 Find Nearest</button>
-                <button class="btn btn-secondary" onclick="clearRes()">🗑️ Clear</button>
-            </div>
+
+      <!-- Left: Input Panel -->
+      <div class="card">
+        <h2 class="card-title">📍 Project Site Coordinates</h2>
+
+        <div class="input-grid">
+          <div class="input-group">
+            <label for="lat">Latitude (°N)</label>
+            <input type="number" id="lat" placeholder="e.g., 3.1390" step="0.0001">
+          </div>
+          <div class="input-group">
+            <label for="lon">Longitude (°E)</label>
+            <input type="number" id="lon" placeholder="e.g., 101.6869" step="0.0001">
+          </div>
         </div>
 
-        <div class="card">
-            <h2 class="card-title">🗺️ Station Map</h2>
-            <div class="filter-row">
-                <button class="filter-btn active" onclick="filterRegion('all',this)">All Malaysia</button>
-                <button class="filter-btn" onclick="filterRegion('peninsular',this)">Peninsular</button>
-                <button class="filter-btn" onclick="filterRegion('sabah',this)">Sabah</button>
-                <button class="filter-btn" onclick="filterRegion('sarawak',this)">Sarawak</button>
-            </div>
-            <div class="legend-map">
-                <div class="legend-item"><div class="legend-dot" style="background:#2980b9"></div> Station</div>
-                <div class="legend-item"><div class="legend-dot" style="background:#e74c3c"></div> Your Site</div>
-                <div class="legend-item"><div class="legend-dot" style="background:#27ae60"></div> Nearest</div>
-                <div class="legend-item"><div class="legend-dot" style="background:#f39c12"></div> 2nd / 3rd</div>
-            </div>
-            <div id="map"></div>
+        <div class="input-group" style="margin-bottom:12px">
+          <label>Quick Locations</label>
+          <div class="quick-locations" id="quickLocations"></div>
         </div>
+
+        <div class="btn-group">
+          <button class="btn btn-primary" id="btnFind">🔍 Find Nearest</button>
+          <button class="btn btn-secondary" id="btnClear">🗑️ Clear</button>
+        </div>
+      </div>
+
+      <!-- Right: Map -->
+      <div class="card">
+        <h2 class="card-title">🗺️ Station Map</h2>
+
+        <div class="filter-row">
+          <button class="filter-btn active" data-region="all">All Malaysia</button>
+          <button class="filter-btn" data-region="peninsular">Peninsular</button>
+          <button class="filter-btn" data-region="sabah">Sabah</button>
+          <button class="filter-btn" data-region="sarawak">Sarawak</button>
+        </div>
+
+        <div class="legend">
+          <div class="legend-item">
+            <div class="legend-dot" style="background:#2980b9"></div> Peninsular
+          </div>
+          <div class="legend-item">
+            <div class="legend-dot" style="background:#e74c3c"></div> Sabah
+          </div>
+          <div class="legend-item">
+            <div class="legend-dot" style="background:#f39c12"></div> Sarawak
+          </div>
+          <div class="legend-item">
+            <div class="legend-dot" style="background:#e74c3c"></div> Your Site
+          </div>
+          <div class="legend-item">
+            <div class="legend-dot" style="background:#27ae60"></div> Nearest Line
+          </div>
+        </div>
+
+        <div id="map"></div>
+      </div>
     </div>
 
-    <!-- Results -->
+    <!-- ═══════════════════════════════════════════════════ -->
+    <!-- RESULTS SECTION                                    -->
+    <!-- ═══════════════════════════════════════════════════ -->
     <div class="results" id="results">
-        <div class="card" style="margin-top:20px">
-            <h2 class="card-title">📊 Top 3 Nearest Stations</h2>
-            <div id="stationResults"></div>
+
+      <!-- Nearest Stations -->
+      <div class="card" style="margin-top:20px">
+        <h2 class="card-title">📊 Top 3 Nearest Stations</h2>
+        <div id="stationResults"></div>
+      </div>
+
+      <!-- IDF Coefficients -->
+      <div class="card idf-section">
+        <h2 class="card-title">📈 IDF Coefficients — Nearest Station</h2>
+
+        <div class="idf-equation">
+          <p style="color:#888;font-size:.85rem;margin-bottom:6px">MSMA 2nd Edition IDF Polynomial (Eq. 13.2)</p>
+          <div class="equation">ln(RI<sub>t</sub>) = a + b·ln(t) + c·[ln(t)]² + d·[ln(t)]³</div>
+          <p style="color:#888;font-size:.8rem;margin-top:6px">RI<sub>t</sub> = Rainfall Intensity (mm/hr), t = Duration (min), valid 30–1000 min</p>
         </div>
 
-        <!-- IDF Coefficients -->
-        <div class="card idf-calc">
-            <h2 class="card-title">📈 IDF Coefficients — Nearest Station</h2>
-            <div class="idf-equation">
-                <p style="color:#888;font-size:.85rem;margin-bottom:6px">MSMA 2nd Edition IDF Polynomial (Eq. 13.2)</p>
-                <div class="equation">ln(RI<sub>t</sub>) = a + b·ln(t) + c·[ln(t)]² + d·[ln(t)]³</div>
-                <p style="color:#888;font-size:.8rem;margin-top:6px">RI<sub>t</sub> = Rainfall Intensity (mm/hr), t = Duration (min), valid 30–1000 min</p>
-            </div>
-            <h3 style="color:#1a5276;font-size:1rem;margin-bottom:10px" id="coeffTitle">Coefficients (10-yr ARI)</h3>
-            <div class="coeff-grid" id="coeffGrid"></div>
-            <div style="overflow-x:auto">
-                <table class="idf-table">
-                    <thead><tr><th>ARI (yr)</th><th>a</th><th>b</th><th>c</th><th>d</th></tr></thead>
-                    <tbody id="idfBody"></tbody>
-                </table>
-            </div>
+        <h3 style="color:#1a5276;font-size:1rem;margin-bottom:10px" id="coeffTitle">Coefficients (10-yr ARI)</h3>
+        <div class="coeff-grid" id="coeffGrid"></div>
+
+        <div style="overflow-x:auto">
+          <table class="idf-table">
+            <thead>
+              <tr><th>ARI (yr)</th><th>a</th><th>b</th><th>c</th><th>d</th></tr>
+            </thead>
+            <tbody id="idfBody"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- IDF Curve Chart -->
+      <div class="card" style="margin-top:20px">
+        <h2 class="card-title">📉 IDF Curves</h2>
+        <div class="chart-container">
+          <canvas id="idfChart"></canvas>
+        </div>
+      </div>
+
+      <!-- IDF Calculator -->
+      <div class="card" style="margin-top:20px">
+        <h2 class="card-title">🧮 IDF Rainfall Intensity Calculator</h2>
+        <p style="color:#888;font-size:.85rem;margin-bottom:12px">
+          Calculate rainfall intensity (mm/hr) for a given duration and ARI.
+        </p>
+
+        <div class="input-grid">
+          <div class="input-group">
+            <label for="calcDur">Duration (minutes)</label>
+            <input type="number" id="calcDur" placeholder="e.g., 60" min="30" max="1000" step="1">
+            <p class="hint">Valid range: 30 – 1000 minutes</p>
+          </div>
+          <div class="input-group">
+            <label for="calcARI">Average Recurrence Interval (years)</label>
+            <select id="calcARI">
+              <option value="2">2 years</option>
+              <option value="5">5 years</option>
+              <option value="10" selected>10 years</option>
+              <option value="20">20 years</option>
+              <option value="50">50 years</option>
+              <option value="100">100 years</option>
+            </select>
+          </div>
         </div>
 
-        <!-- IDF Calculator -->
-        <div class="card" style="margin-top:20px">
-            <h2 class="card-title">🧮 IDF Rainfall Intensity Calculator</h2>
-            <p style="color:#888;font-size:.85rem;margin-bottom:12px">Calculate rainfall intensity (mm/hr) for a given duration and ARI using nearest station's coefficients.</p>
-            <div class="input-grid">
-                <div class="input-group">
-                    <label>Duration (minutes)</label>
-                    <input type="number" id="calcDur" placeholder="e.g., 60" min="30" max="1000" step="1">
-                    <p class="hint">Valid range: 30 – 1000 minutes</p>
-                </div>
-                <div class="input-group">
-                    <label>Average Recurrence Interval (years)</label>
-                    <select id="calcARI">
-                        <option value="2">2 years</option>
-                        <option value="5">5 years</option>
-                        <option value="10" selected>10 years</option>
-                        <option value="20">20 years</option>
-                        <option value="50">50 years</option>
-                        <option value="100">100 years</option>
-                    </select>
-                </div>
-            </div>
-            <button class="btn btn-success" onclick="calcIDF()">⚡ Calculate Intensity</button>
-            <div class="calc-result" id="calcResult">
-                <p>Rainfall Intensity</p>
-                <h3 id="calcIntensity">— mm/hr</h3>
-                <p id="calcDetail"></p>
-            </div>
-            <div class="formula-note">
-                <strong>📝 Short Duration (< 30 min):</strong> Use Table 13.3 & Eq. 13.3 from MSMA 2nd Edition. The polynomial is valid for 30 ≤ t ≤ 1000 min only.
-            </div>
+        <button class="btn btn-success" id="btnCalc">⚡ Calculate Intensity</button>
+
+        <div class="calc-result" id="calcResult">
+          <p>Rainfall Intensity</p>
+          <h3 id="calcIntensity">— mm/hr</h3>
+          <p id="calcDetail"></p>
         </div>
+
+        <div class="formula-note">
+          <strong>📝 Short Duration (&lt; 30 min):</strong>
+          Use Table 13.3 &amp; Eq. 13.3 from MSMA 2nd Edition. The polynomial is valid for 30 ≤ t ≤ 1000 min only.
+        </div>
+      </div>
     </div>
 
+    <!-- ═══════════════════════════════════════════════════ -->
+    <!-- FOOTER                                             -->
+    <!-- ═══════════════════════════════════════════════════ -->
     <footer>
-        <p><strong>MSMA Rainfall Station Finder</strong> — Based on MSMA 2nd Edition (2012) & SUStoM (2018)</p>
-        <p>Department of Irrigation and Drainage (DID) Malaysia | For preliminary reference only</p>
+      <p><strong>MSMA Rainfall Station Finder</strong> — Based on MSMA 2nd Edition (2012) &amp; SUStoM (2018)</p>
+      <p>Department of Irrigation and Drainage (DID) Malaysia | For preliminary reference only</p>
     </footer>
-</div>
+  </div>
 
-<script>
-// ============================================================
-// STATION DATABASE — Peninsular Malaysia (MSMA 2nd Ed)
-// ============================================================
-const stations=[
-// --- PENINSULAR MALAYSIA ---
-{id:"PS01",name:"Kangar",state:"Perlis",region:"peninsular",lat:6.4414,lon:100.1986,c:{2:{a:4.6800,b:0.4719,c:-0.1915,d:0.0093},5:{a:5.7949,b:-0.1944,c:-0.0413,d:-0.0008},10:{a:6.5896,b:-0.6048,c:0.0445,d:-0.0064},20:{a:6.8710,b:-0.6670,c:0.0478,d:-0.0059},50:{a:7.1137,b:-0.7419,c:0.0621,d:-0.0067},100:{a:6.5715,b:-0.2462,c:-0.0518,d:0.0016}}},
-{id:"PS02",name:"Arau",state:"Perlis",region:"peninsular",lat:6.4333,lon:100.2833,c:{2:{a:4.6800,b:0.4719,c:-0.1915,d:0.0093},5:{a:5.7949,b:-0.1944,c:-0.0413,d:-0.0008},10:{a:6.5896,b:-0.6048,c:0.0445,d:-0.0064},20:{a:6.8710,b:-0.6670,c:0.0478,d:-0.0059},50:{a:7.1137,b:-0.7419,c:0.0621,d:-0.0067},100:{a:6.5715,b:-0.2462,c:-0.0518,d:0.0016}}},
-{id:"KH01",name:"Alor Setar",state:"Kedah",region:"peninsular",lat:6.1167,lon:100.3667,c:{2:{a:5.6790,b:-0.0276,c:-0.0993,d:0.0033},5:{a:4.9709,b:0.5460,c:-0.2176,d:0.0113},10:{a:5.6422,b:0.1575,c:-0.1329,d:0.0056},20:{a:5.8203,b:0.1093,c:-0.1248,d:0.0053},50:{a:5.7420,b:0.2273,c:-0.1481,d:0.0068},100:{a:6.3202,b:-0.0778,c:-0.0849,d:0.0026}}},
-{id:"KH02",name:"Sungai Petani",state:"Kedah",region:"peninsular",lat:5.6500,lon:100.4833,c:{2:{a:5.6790,b:-0.0276,c:-0.0993,d:0.0033},5:{a:4.9709,b:0.5460,c:-0.2176,d:0.0113},10:{a:5.6422,b:0.1575,c:-0.1329,d:0.0056},20:{a:5.8203,b:0.1093,c:-0.1248,d:0.0053},50:{a:5.7420,b:0.2273,c:-0.1481,d:0.0068},100:{a:6.3202,b:-0.0778,c:-0.0849,d:0.0026}}},
-{id:"KH03",name:"Kulim",state:"Kedah",region:"peninsular",lat:5.3833,lon:100.5667,c:{2:{a:5.6790,b:-0.0276,c:-0.0993,d:0.0033},5:{a:4.9709,b:0.5460,c:-0.2176,d:0.0113},10:{a:5.6422,b:0.1575,c:-0.1329,d:0.0056},20:{a:5.8203,b:0.1093,c:-0.1248,d:0.0053},50:{a:5.7420,b:0.2273,c:-0.1481,d:0.0068},100:{a:6.3202,b:-0.0778,c:-0.0849,d:0.0026}}},
-{id:"PP01",name:"Penang",state:"Pulau Pinang",region:"peninsular",lat:5.4164,lon:100.3327,c:{2:{a:4.5140,b:0.6729,c:-0.2311,d:0.0118},5:{a:3.9599,b:1.1284,c:-0.3240,d:0.0180},10:{a:3.7277,b:1.4393,c:-0.4023,d:0.0241},20:{a:3.3255,b:1.7689,c:-0.4703,d:0.0286},50:{a:2.8429,b:2.1456,c:-0.5469,d:0.0335},100:{a:2.7512,b:2.2417,c:-0.5610,d:0.0341}}},
-{id:"PK01",name:"Ipoh",state:"Perak",region:"peninsular",lat:4.5975,lon:101.0901,c:{2:{a:5.2244,b:0.3853,c:-0.1970,d:0.0100},5:{a:5.0007,b:0.6149,c:-0.2406,d:0.0127},10:{a:5.0707,b:0.6515,c:-0.2522,d:0.0138},20:{a:5.1150,b:0.6895,c:-0.2631,d:0.0147},50:{a:4.9627,b:0.8489,c:-0.2966,d:0.0169},100:{a:5.1068,b:0.8168,c:-0.2905,d:0.0165}}},
-{id:"PK02",name:"Bagan Serai",state:"Perak",region:"peninsular",lat:5.0093,lon:100.7460,c:{2:{a:4.1689,b:0.8160,c:-0.2726,d:0.0149},5:{a:4.7867,b:0.4919,c:-0.1993,d:0.0099},10:{a:5.2760,b:0.2436,c:-0.1436,d:0.0059},20:{a:5.6661,b:0.0329,c:-0.0944,d:0.0024},50:{a:5.3431,b:0.3538,c:-0.1686,d:0.0078},100:{a:5.3299,b:0.4357,c:-0.1857,d:0.0089}}},
-{id:"PK03",name:"Teluk Intan",state:"Perak",region:"peninsular",lat:4.0267,lon:101.0333,c:{2:{a:5.6134,b:-0.1209,c:-0.0651,d:0.00004},5:{a:6.1025,b:-0.2240,c:-0.0484,d:-0.0008},10:{a:6.3160,b:-0.2756,c:-0.0390,d:-0.0012},20:{a:6.3504,b:-0.2498,c:-0.0377,d:-0.0016},50:{a:6.7638,b:-0.4595,c:0.0094,d:-0.0050},100:{a:6.7375,b:-0.3572,c:-0.0070,d:-0.0043}}},
-{id:"PK04",name:"Kuala Kangsar",state:"Perak",region:"peninsular",lat:4.7667,lon:100.9500,c:{2:{a:4.2114,b:0.9483,c:-0.3154,d:0.0179},5:{a:4.7986,b:0.5803,c:-0.2202,d:0.0107},10:{a:5.3916,b:0.2993,c:-0.1640,d:0.0071},20:{a:5.7854,b:0.1175,c:-0.1244,d:0.0044},50:{a:6.5736,b:-0.2903,c:-0.0482,d:0.00002},100:{a:6.0681,b:0.1478,c:-0.1435,d:0.0065}}},
-{id:"PK05",name:"Sitiawan",state:"Perak",region:"peninsular",lat:4.2315,lon:100.6967,c:{2:{a:5.0790,b:0.3724,c:-0.1796,d:0.0081},5:{a:5.2320,b:0.3330,c:-0.1635,d:0.0068},10:{a:5.5868,b:0.0964,c:-0.1014,d:0.0021},20:{a:5.5294,b:0.2189,c:-0.1349,d:0.0051},50:{a:5.2993,b:0.4270,c:-0.1780,d:0.0082},100:{a:5.5575,b:0.3005,c:-0.1465,d:0.0058}}},
-{id:"PK06",name:"Taiping",state:"Perak",region:"peninsular",lat:4.8500,lon:100.7333,c:{2:{a:5.2244,b:0.3853,c:-0.1970,d:0.0100},5:{a:5.0007,b:0.6149,c:-0.2406,d:0.0127},10:{a:5.0707,b:0.6515,c:-0.2522,d:0.0138},20:{a:5.1150,b:0.6895,c:-0.2631,d:0.0147},50:{a:4.9627,b:0.8489,c:-0.2966,d:0.0169},100:{a:5.1068,b:0.8168,c:-0.2905,d:0.0165}}},
-{id:"PK07",name:"Kampar",state:"Perak",region:"peninsular",lat:4.3000,lon:101.1500,c:{2:{a:5.2244,b:0.3853,c:-0.1970,d:0.0100},5:{a:5.0007,b:0.6149,c:-0.2406,d:0.0127},10:{a:5.0707,b:0.6515,c:-0.2522,d:0.0138},20:{a:5.1150,b:0.6895,c:-0.2631,d:0.0147},50:{a:4.9627,b:0.8489,c:-0.2966,d:0.0169},100:{a:5.1068,b:0.8168,c:-0.2905,d:0.0165}}},
-{id:"SL01",name:"Kuala Kubu Bahru",state:"Selangor",region:"peninsular",lat:3.5583,lon:101.6500,c:{2:{a:4.2095,b:0.5056,c:-0.1551,d:0.0044},5:{a:5.1943,b:-0.0350,c:-0.0392,d:-0.0034},10:{a:5.5074,b:-0.1637,c:-0.0116,d:-0.0053},20:{a:5.6772,b:-0.1562,c:-0.0229,d:-0.0040},50:{a:6.0934,b:-0.3710,c:0.0239,d:-0.0073},100:{a:6.3094,b:-0.4087,c:0.0229,d:-0.0068}}},
-{id:"SL02",name:"Petaling Jaya",state:"Selangor",region:"peninsular",lat:3.1073,lon:101.6067,c:{2:{a:5.3255,b:0.1806,c:-0.1322,d:0.0047},5:{a:5.1086,b:0.5037,c:-0.2155,d:0.0112},10:{a:4.9696,b:0.6796,c:-0.2584,d:0.0147},20:{a:4.9781,b:0.7533,c:-0.2796,d:0.0166},50:{a:4.8047,b:0.9399,c:-0.3218,d:0.0197},100:{a:5.0064,b:0.8709,c:-0.3070,d:0.0186}}},
-{id:"SL03",name:"Shah Alam",state:"Selangor",region:"peninsular",lat:3.0733,lon:101.4930,c:{2:{a:5.3255,b:0.1806,c:-0.1322,d:0.0047},5:{a:5.1086,b:0.5037,c:-0.2155,d:0.0112},10:{a:4.9696,b:0.6796,c:-0.2584,d:0.0147},20:{a:4.9781,b:0.7533,c:-0.2796,d:0.0166},50:{a:4.8047,b:0.9399,c:-0.3218,d:0.0197},100:{a:5.0064,b:0.8709,c:-0.3070,d:0.0186}}},
-{id:"SL04",name:"Ampang",state:"Selangor",region:"peninsular",lat:3.1500,lon:101.7667,c:{2:{a:5.3255,b:0.1806,c:-0.1322,d:0.0047},5:{a:5.1086,b:0.5037,c:-0.2155,d:0.0112},10:{a:4.9696,b:0.6796,c:-0.2584,d:0.0147},20:{a:4.9781,b:0.7533,c:-0.2796,d:0.0166},50:{a:4.8047,b:0.9399,c:-0.3218,d:0.0197},100:{a:5.0064,b:0.8709,c:-0.3070,d:0.0186}}},
-{id:"SL05",name:"Klang",state:"Selangor",region:"peninsular",lat:3.0333,lon:101.4500,c:{2:{a:3.7091,b:1.1622,c:-0.3289,d:0.0176},5:{a:4.3987,b:0.7725,c:-0.2381,d:0.0105},10:{a:4.9930,b:0.4661,c:-0.1740,d:0.0065},20:{a:5.0856,b:0.5048,c:-0.1875,d:0.0076},50:{a:4.8506,b:0.7398,c:-0.2388,d:0.0110},100:{a:5.3796,b:0.4628,c:-0.1826,d:0.0070}}},
-{id:"SL06",name:"Subang",state:"Selangor",region:"peninsular",lat:3.1167,lon:101.5500,c:{2:{a:5.3255,b:0.1806,c:-0.1322,d:0.0047},5:{a:5.1086,b:0.5037,c:-0.2155,d:0.0112},10:{a:4.9696,b:0.6796,c:-0.2584,d:0.0147},20:{a:4.9781,b:0.7533,c:-0.2796,d:0.0166},50:{a:4.8047,b:0.9399,c:-0.3218,d:0.0197},100:{a:5.0064,b:0.8709,c:-0.3070,d:0.0186}}},
-{id:"SL07",name:"Rawang",state:"Selangor",region:"peninsular",lat:3.3167,lon:101.5833,c:{2:{a:5.3255,b:0.1806,c:-0.1322,d:0.0047},5:{a:5.1086,b:0.5037,c:-0.2155,d:0.0112},10:{a:4.9696,b:0.6796,c:-0.2584,d:0.0147},20:{a:4.9781,b:0.7533,c:-0.2796,d:0.0166},50:{a:4.8047,b:0.9399,c:-0.3218,d:0.0197},100:{a:5.0064,b:0.8709,c:-0.3070,d:0.0186}}},
-{id:"SL08",name:"Selayang",state:"Selangor",region:"peninsular",lat:3.2500,lon:101.6500,c:{2:{a:5.3255,b:0.1806,c:-0.1322,d:0.0047},5:{a:5.1086,b:0.5037,c:-0.2155,d:0.0112},10:{a:4.9696,b:0.6796,c:-0.2584,d:0.0147},20:{a:4.9781,b:0.7533,c:-0.2796,d:0.0166},50:{a:4.8047,b:0.9399,c:-0.3218,d:0.0197},100:{a:5.0064,b:0.8709,c:-0.3070,d:0.0186}}},
-{id:"SL09",name:"Kajang",state:"Selangor",region:"peninsular",lat:2.9967,lon:101.7867,c:{2:{a:5.3255,b:0.1806,c:-0.1322,d:0.0047},5:{a:5.1086,b:0.5037,c:-0.2155,d:0.0112},10:{a:4.9696,b:0.6796,c:-0.2584,d:0.0147},20:{a:4.9781,b:0.7533,c:-0.2796,d:0.0166},50:{a:4.8047,b:0.9399,c:-0.3218,d:0.0197},100:{a:5.0064,b:0.8709,c:-0.3070,d:0.0186}}},
-{id:"SL10",name:"Sepang",state:"Selangor",region:"peninsular",lat:2.8167,lon:101.7500,c:{2:{a:5.3255,b:0.1806,c:-0.1322,d:0.0047},5:{a:5.1086,b:0.5037,c:-0.2155,d:0.0112},10:{a:4.9696,b:0.6796,c:-0.2584,d:0.0147},20:{a:4.9781,b:0.7533,c:-0.2796,d:0.0166},50:{a:4.8047,b:0.9399,c:-0.3218,d:0.0197},100:{a:5.0064,b:0.8709,c:-0.3070,d:0.0186}}},
-{id:"SL11",name:"Dengkil",state:"Selangor",region:"peninsular",lat:2.8667,lon:101.6833,c:{2:{a:5.3255,b:0.1806,c:-0.1322,d:0.0047},5:{a:5.1086,b:0.5037,c:-0.2155,d:0.0112},10:{a:4.9696,b:0.6796,c:-0.2584,d:0.0147},20:{a:4.9781,b:0.7533,c:-0.2796,d:0.0166},50:{a:4.8047,b:0.9399,c:-0.3218,d:0.0197},100:{a:5.0064,b:0.8709,c:-0.3070,d:0.0186}}},
-{id:"KL01",name:"Kuala Lumpur",state:"Federal Territory",region:"peninsular",lat:3.1390,lon:101.6869,c:{2:{a:5.3255,b:0.1806,c:-0.1322,d:0.0047},5:{a:5.1086,b:0.5037,c:-0.2155,d:0.0112},10:{a:4.9696,b:0.6796,c:-0.2584,d:0.0147},20:{a:4.9781,b:0.7533,c:-0.2796,d:0.0166},50:{a:4.8047,b:0.9399,c:-0.3218,d:0.0197},100:{a:5.0064,b:0.8709,c:-0.3070,d:0.0186}}},
-{id:"KL02",name:"Batu Caves",state:"Federal Territory",region:"peninsular",lat:3.2378,lon:101.6819,c:{2:{a:5.3255,b:0.1806,c:-0.1322,d:0.0047},5:{a:5.1086,b:0.5037,c:-0.2155,d:0.0112},10:{a:4.9696,b:0.6796,c:-0.2584,d:0.0147},20:{a:4.9781,b:0.7533,c:-0.2796,d:0.0166},50:{a:4.8047,b:0.9399,c:-0.3218,d:0.0197},100:{a:5.0064,b:0.8709,c:-0.3070,d:0.0186}}},
-{id:"NS01",name:"Seremban",state:"N. Sembilan",region:"peninsular",lat:2.7297,lon:101.9381,c:{2:{a:5.2565,b:0.0719,c:-0.1306,d:0.0036},5:{a:5.4663,b:0.0586,c:-0.1269,d:0.0033},10:{a:6.1240,b:-0.2191,c:-0.0820,d:0.0010},20:{a:6.3733,b:-0.2451,c:-0.0888,d:0.0013},50:{a:6.9932,b:-0.5087,c:-0.0479,d:-0.0012},100:{a:7.0782,b:-0.4277,c:-0.0731,d:0.0007}}},
-{id:"NS02",name:"Port Dickson",state:"N. Sembilan",region:"peninsular",lat:2.5217,lon:101.8000,c:{2:{a:5.2565,b:0.0719,c:-0.1306,d:0.0036},5:{a:5.4663,b:0.0586,c:-0.1269,d:0.0033},10:{a:6.1240,b:-0.2191,c:-0.0820,d:0.0010},20:{a:6.3733,b:-0.2451,c:-0.0888,d:0.0013},50:{a:6.9932,b:-0.5087,c:-0.0479,d:-0.0012},100:{a:7.0782,b:-0.4277,c:-0.0731,d:0.0007}}},
-{id:"ML01",name:"Melaka",state:"Melaka",region:"peninsular",lat:2.1896,lon:102.2501,c:{2:{a:3.9982,b:0.9722,c:-0.3215,d:0.0163},5:{a:3.7967,b:1.2904,c:-0.4012,d:0.0227},10:{a:4.5287,b:0.8474,c:-0.3008,d:0.0148},20:{a:4.9287,b:0.6897,c:-0.2753,d:0.0131},50:{a:4.7768,b:0.8716,c:-0.3158,d:0.0160},100:{a:4.6588,b:1.0163,c:-0.3471,d:0.0180}}},
-{id:"ML02",name:"Jasin",state:"Melaka",region:"peninsular",lat:2.3167,lon:102.4333,c:{2:{a:3.9982,b:0.9722,c:-0.3215,d:0.0163},5:{a:3.7967,b:1.2904,c:-0.4012,d:0.0227},10:{a:4.5287,b:0.8474,c:-0.3008,d:0.0148},20:{a:4.9287,b:0.6897,c:-0.2753,d:0.0131},50:{a:4.7768,b:0.8716,c:-0.3158,d:0.0160},100:{a:4.6588,b:1.0163,c:-0.3471,d:0.0180}}},
-{id:"JO01",name:"Johor Bahru",state:"Johor",region:"peninsular",lat:1.4854,lon:103.7618,c:{2:{a:4.5860,b:0.7083,c:-0.2761,d:0.0123},5:{a:5.0571,b:0.4815,c:-0.2220,d:0.0090},10:{a:5.2665,b:0.4284,c:-0.2131,d:0.0087},20:{a:5.4813,b:0.3471,c:-0.1945,d:0.0076},50:{a:5.8808,b:0.1412,c:-0.1498,d:0.0048},100:{a:6.3369,b:-0.0789,c:-0.1066,d:0.0018}}},
-{id:"JO02",name:"Kluang",state:"Johor",region:"peninsular",lat:2.0333,lon:103.3167,c:{2:{a:4.5860,b:0.7083,c:-0.2761,d:0.0123},5:{a:5.0571,b:0.4815,c:-0.2220,d:0.0090},10:{a:5.2665,b:0.4284,c:-0.2131,d:0.0087},20:{a:5.4813,b:0.3471,c:-0.1945,d:0.0076},50:{a:5.8808,b:0.1412,c:-0.1498,d:0.0048},100:{a:6.3369,b:-0.0789,c:-0.1066,d:0.0018}}},
-{id:"JO03",name:"Mersing",state:"Johor",region:"peninsular",lat:2.4333,lon:103.8500,c:{2:{a:5.1028,b:0.2883,c:-0.1627,d:0.0059},5:{a:5.7048,b:-0.0635,c:-0.0771,d:-0.0006},10:{a:5.8489,b:-0.0890,c:-0.0705,d:-0.0008},20:{a:4.8420,b:0.7395,c:-0.2579,d:0.0120},50:{a:6.2257,b:-0.1499,c:-0.0631,d:-0.0005},100:{a:6.7796,b:-0.4104,c:-0.0160,d:-0.0033}}},
-{id:"PH01",name:"Kuantan",state:"Pahang",region:"peninsular",lat:3.8167,lon:103.3333,c:{2:{a:4.5023,b:0.6159,c:-0.2289,d:0.0097},5:{a:4.9886,b:0.3883,c:-0.1769,d:0.0063},10:{a:5.2470,b:0.2916,c:-0.1575,d:0.0053},20:{a:5.7407,b:0.0204,c:-0.0979,d:0.0015},50:{a:6.2276,b:-0.2278,c:-0.0474,d:-0.0012},100:{a:6.5443,b:-0.3840,c:-0.0135,d:-0.0033}}},
-{id:"PH02",name:"Temerloh",state:"Pahang",region:"peninsular",lat:3.4500,lon:102.4000,c:{2:{a:4.5023,b:0.6159,c:-0.2289,d:0.0097},5:{a:4.9886,b:0.3883,c:-0.1769,d:0.0063},10:{a:5.2470,b:0.2916,c:-0.1575,d:0.0053},20:{a:5.7407,b:0.0204,c:-0.0979,d:0.0015},50:{a:6.2276,b:-0.2278,c:-0.0474,d:-0.0012},100:{a:6.5443,b:-0.3840,c:-0.0135,d:-0.0033}}},
-{id:"PH03",name:"Raub",state:"Pahang",region:"peninsular",lat:3.7833,lon:101.8667,c:{2:{a:4.5023,b:0.6159,c:-0.2289,d:0.0097},5:{a:4.9886,b:0.3883,c:-0.1769,d:0.0063},10:{a:5.2470,b:0.2916,c:-0.1575,d:0.0053},20:{a:5.7407,b:0.0204,c:-0.0979,d:0.0015},50:{a:6.2276,b:-0.2278,c:-0.0474,d:-0.0012},100:{a:6.5443,b:-0.3840,c:-0.0135,d:-0.0033}}},
-{id:"TR01",name:"Kuala Terengganu",state:"Terengganu",region:"peninsular",lat:5.3302,lon:103.1408,c:{2:{a:3.8645,b:1.1150,c:-0.3272,d:0.0169},5:{a:4.3251,b:1.0147,c:-0.3308,d:0.0170},10:{a:4.4896,b:0.9971,c:-0.3279,d:0.0166},20:{a:4.7656,b:0.8922,c:-0.3060,d:0.0149},50:{a:4.5463,b:1.1612,c:-0.3758,d:0.0194},100:{a:5.0532,b:0.8998,c:-0.3222,d:0.0159}}},
-{id:"KN01",name:"Kota Bharu",state:"Kelantan",region:"peninsular",lat:6.1210,lon:102.2940,c:{2:{a:3.0293,b:1.4428,c:-0.3924,d:0.0193},5:{a:4.2804,b:0.9393,c:-0.3161,d:0.0144},10:{a:6.2961,b:-0.1466,c:-0.1145,d:-0.0031},20:{a:7.3616,b:-0.6982,c:-0.0131,d:-0.0092},50:{a:7.4417,b:-0.6247,c:-0.0335,d:-0.0074},100:{a:8.1159,b:-0.9379,c:0.0231,d:-0.0117}}},
-{id:"KN02",name:"Gua Musang",state:"Kelantan",region:"peninsular",lat:4.8833,lon:101.9667,c:{2:{a:3.0293,b:1.4428,c:-0.3924,d:0.0193},5:{a:4.2804,b:0.9393,c:-0.3161,d:0.0144},10:{a:6.2961,b:-0.1466,c:-0.1145,d:-0.0031},20:{a:7.3616,b:-0.6982,c:-0.0131,d:-0.0092},50:{a:7.4417,b:-0.6247,c:-0.0335,d:-0.0074},100:{a:8.1159,b:-0.9379,c:0.0231,d:-0.0117}}},
-
-// --- SABAH (SUStoM / HP26) ---
-{id:"SB01",name:"Kota Kinabalu",state:"Sabah",region:"sabah",lat:5.9750,lon:116.0700,c:{2:{a:5.1200,b:0.3200,c:-0.1580,d:0.0065},5:{a:5.4500,b:0.1800,c:-0.1250,d:0.0042},10:{a:5.6800,b:0.0500,c:-0.0980,d:0.0024},20:{a:5.8200,b:-0.0200,c:-0.0820,d:0.0013},50:{a:6.0100,b:-0.1500,c:-0.0550,d:-0.0008},100:{a:6.1800,b:-0.2800,c:-0.0320,d:-0.0025}}},
-{id:"SB02",name:"Sandakan",state:"Sabah",region:"sabah",lat:5.8411,lon:118.1179,c:{2:{a:5.3500,b:0.2100,c:-0.1420,d:0.0055},5:{a:5.5800,b:0.1200,c:-0.1150,d:0.0035},10:{a:5.7500,b:0.0200,c:-0.0900,d:0.0018},20:{a:5.8800,b:-0.0600,c:-0.0720,d:0.0007},50:{a:6.0500,b:-0.2000,c:-0.0450,d:-0.0013},100:{a:6.2200,b:-0.3200,c:-0.0250,d:-0.0028}}},
-{id:"SB03",name:"Tawau",state:"Sabah",region:"sabah",lat:4.2448,lon:117.8920,c:{2:{a:5.2800,b:0.2500,c:-0.1480,d:0.0060},5:{a:5.5200,b:0.1500,c:-0.1200,d:0.0038},10:{a:5.7000,b:0.0400,c:-0.0950,d:0.0020},20:{a:5.8300,b:-0.0400,c:-0.0780,d:0.0009},50:{a:6.0200,b:-0.1800,c:-0.0500,d:-0.0011},100:{a:6.1900,b:-0.3000,c:-0.0280,d:-0.0027}}},
-{id:"SB04",name:"Keningau",state:"Sabah",region:"sabah",lat:5.3500,lon:116.1500,c:{2:{a:5.1800,b:0.2800,c:-0.1520,d:0.0062},5:{a:5.4200,b:0.1600,c:-0.1180,d:0.0037},10:{a:5.6200,b:0.0300,c:-0.0920,d:0.0019},20:{a:5.7600,b:-0.0500,c:-0.0750,d:0.0008},50:{a:5.9500,b:-0.1900,c:-0.0480,d:-0.0012},100:{a:6.1200,b:-0.3100,c:-0.0260,d:-0.0026}}},
-{id:"SB05",name:"Lahad Datu",state:"Sabah",region:"sabah",lat:5.0283,lon:118.3405,c:{2:{a:5.3100,b:0.2300,c:-0.1450,d:0.0058},5:{a:5.5500,b:0.1300,c:-0.1170,d:0.0036},10:{a:5.7200,b:0.0300,c:-0.0930,d:0.0019},20:{a:5.8500,b:-0.0500,c:-0.0760,d:0.0008},50:{a:6.0300,b:-0.1900,c:-0.0490,d:-0.0012},100:{a:6.2000,b:-0.3100,c:-0.0270,d:-0.0027}}},
-{id:"SB06",name:"Kota Belud",state:"Sabah",region:"sabah",lat:6.3500,lon:116.4300,c:{2:{a:5.1000,b:0.3300,c:-0.1600,d:0.0067},5:{a:5.4300,b:0.1900,c:-0.1270,d:0.0043},10:{a:5.6500,b:0.0600,c:-0.1000,d:0.0025},20:{a:5.8000,b:-0.0100,c:-0.0830,d:0.0014},50:{a:5.9900,b:-0.1400,c:-0.0560,d:-0.0007},100:{a:6.1600,b:-0.2700,c:-0.0330,d:-0.0024}}},
-{id:"SB07",name:"Ranau",state:"Sabah",region:"sabah",lat:5.9500,lon:116.6700,c:{2:{a:5.1500,b:0.3000,c:-0.1550,d:0.0064},5:{a:5.4000,b:0.1700,c:-0.1220,d:0.0040},10:{a:5.6000,b:0.0500,c:-0.0960,d:0.0022},20:{a:5.7400,b:-0.0300,c:-0.0790,d:0.0011},50:{a:5.9300,b:-0.1700,c:-0.0520,d:-0.0010},100:{a:6.1000,b:-0.2900,c:-0.0300,d:-0.0025}}},
-{id:"SB08",name:"Beaufort",state:"Sabah",region:"sabah",lat:5.3450,lon:115.7450,c:{2:{a:5.1400,b:0.3100,c:-0.1570,d:0.0065},5:{a:5.3900,b:0.1800,c:-0.1240,d:0.0041},10:{a:5.5900,b:0.0500,c:-0.0970,d:0.0023},20:{a:5.7300,b:-0.0300,c:-0.0800,d:0.0012},50:{a:5.9200,b:-0.1600,c:-0.0530,d:-0.0009},100:{a:6.0900,b:-0.2800,c:-0.0310,d:-0.0024}}},
-{id:"SB09",name:"Tenom",state:"Sabah",region:"sabah",lat:5.1300,lon:115.9500,c:{2:{a:5.1600,b:0.2900,c:-0.1530,d:0.0063},5:{a:5.4100,b:0.1600,c:-0.1200,d:0.0039},10:{a:5.6100,b:0.0400,c:-0.0940,d:0.0021},20:{a:5.7500,b:-0.0400,c:-0.0770,d:0.0010},50:{a:5.9400,b:-0.1800,c:-0.0500,d:-0.0011},100:{a:6.1100,b:-0.3000,c:-0.0290,d:-0.0025}}},
-{id:"SB10",name:"Semporna",state:"Sabah",region:"sabah",lat:4.4833,lon:118.6167,c:{2:{a:5.3200,b:0.2200,c:-0.1440,d:0.0057},5:{a:5.5600,b:0.1200,c:-0.1160,d:0.0035},10:{a:5.7300,b:0.0200,c:-0.0910,d:0.0018},20:{a:5.8600,b:-0.0600,c:-0.0740,d:0.0007},50:{a:6.0400,b:-0.2000,c:-0.0470,d:-0.0013},100:{a:6.2100,b:-0.3200,c:-0.0260,d:-0.0028}}},
-{id:"SB11",name:"Putatan",state:"Sabah",region:"sabah",lat:5.9350,lon:116.0550,c:{2:{a:5.1100,b:0.3200,c:-0.1590,d:0.0066},5:{a:5.4400,b:0.1800,c:-0.1260,d:0.0042},10:{a:5.6600,b:0.0600,c:-0.0990,d:0.0024},20:{a:5.8100,b:-0.0200,c:-0.0820,d:0.0013},50:{a:6.0000,b:-0.1500,c:-0.0550,d:-0.0008},100:{a:6.1700,b:-0.2800,c:-0.0320,d:-0.0025}}},
-{id:"SB12",name:"Papar",state:"Sabah",region:"sabah",lat:5.7333,lon:115.9333,c:{2:{a:5.1300,b:0.3100,c:-0.1580,d:0.0065},5:{a:5.3800,b:0.1700,c:-0.1230,d:0.0040},10:{a:5.5800,b:0.0500,c:-0.0970,d:0.0023},20:{a:5.7200,b:-0.0300,c:-0.0800,d:0.0012},50:{a:5.9100,b:-0.1600,c:-0.0530,d:-0.0009},100:{a:6.0800,b:-0.2800,c:-0.0310,d:-0.0024}}},
-{id:"SB13",name:"Kota Marudu",state:"Sabah",region:"sabah",lat:6.5500,lon:116.1700,c:{2:{a:5.0800,b:0.3400,c:-0.1620,d:0.0068},5:{a:5.4100,b:0.2000,c:-0.1290,d:0.0044},10:{a:5.6300,b:0.0700,c:-0.1020,d:0.0026},20:{a:5.7800,b:-0.0100,c:-0.0850,d:0.0015},50:{a:5.9700,b:-0.1400,c:-0.0570,d:-0.0007},100:{a:6.1400,b:-0.2600,c:-0.0340,d:-0.0023}}},
-{id:"SB14",name:"Kudat",state:"Sabah",region:"sabah",lat:6.8833,lon:116.8500,c:{2:{a:5.0500,b:0.3500,c:-0.1650,d:0.0070},5:{a:5.3800,b:0.2100,c:-0.1320,d:0.0046},10:{a:5.6000,b:0.0800,c:-0.1050,d:0.0028},20:{a:5.7500,b:0.0000,c:-0.0870,d:0.0016},50:{a:5.9400,b:-0.1300,c:-0.0590,d:-0.0006},100:{a:6.1100,b:-0.2500,c:-0.0360,d:-0.0022}}},
-
-// --- SARAWAK (SUStoM / HP26) ---
-{id:"SW01",name:"Kuching",state:"Sarawak",region:"sarawak",lat:1.5533,lon:110.3570,c:{2:{a:4.9500,b:0.4200,c:-0.1750,d:0.0078},5:{a:5.2800,b:0.2800,c:-0.1400,d:0.0052},10:{a:5.5000,b:0.1500,c:-0.1080,d:0.0030},20:{a:5.6500,b:0.0600,c:-0.0880,d:0.0017},50:{a:5.8500,b:-0.0800,c:-0.0600,d:-0.0004},100:{a:6.0200,b:-0.2000,c:-0.0380,d:-0.0018}}},
-{id:"SW02",name:"Sibu",state:"Sarawak",region:"sarawak",lat:2.2867,lon:111.8111,c:{2:{a:5.0500,b:0.3700,c:-0.1680,d:0.0073},5:{a:5.3500,b:0.2400,c:-0.1320,d:0.0048},10:{a:5.5500,b:0.1200,c:-0.1020,d:0.0027},20:{a:5.7000,b:0.0300,c:-0.0830,d:0.0015},50:{a:5.9000,b:-0.1100,c:-0.0560,d:-0.0005},100:{a:6.0700,b:-0.2300,c:-0.0350,d:-0.0019}}},
-{id:"SW03",name:"Miri",state:"Sarawak",region:"sarawak",lat:4.3963,lon:113.9933,c:{2:{a:5.1500,b:0.3100,c:-0.1550,d:0.0064},5:{a:5.4200,b:0.1900,c:-0.1220,d:0.0040},10:{a:5.6200,b:0.0700,c:-0.0950,d:0.0022},20:{a:5.7600,b:-0.0100,c:-0.0780,d:0.0011},50:{a:5.9500,b:-0.1500,c:-0.0520,d:-0.0009},100:{a:6.1200,b:-0.2700,c:-0.0310,d:-0.0024}}},
-{id:"SW04",name:"Bintulu",state:"Sarawak",region:"sarawak",lat:3.1667,lon:113.0333,c:{2:{a:5.1000,b:0.3400,c:-0.1600,d:0.0067},5:{a:5.3800,b:0.2100,c:-0.1280,d:0.0043},10:{a:5.5800,b:0.0900,c:-0.0980,d:0.0024},20:{a:5.7200,b:0.0100,c:-0.0800,d:0.0013},50:{a:5.9100,b:-0.1300,c:-0.0540,d:-0.0007},100:{a:6.0800,b:-0.2500,c:-0.0330,d:-0.0022}}},
-{id:"SW05",name:"Sarikei",state:"Sarawak",region:"sarawak",lat:2.0333,lon:111.5167,c:{2:{a:5.0200,b:0.3800,c:-0.1700,d:0.0075},5:{a:5.3200,b:0.2500,c:-0.1350,d:0.0049},10:{a:5.5200,b:0.1300,c:-0.1050,d:0.0028},20:{a:5.6700,b:0.0400,c:-0.0850,d:0.0016},50:{a:5.8700,b:-0.1000,c:-0.0580,d:-0.0004},100:{a:6.0400,b:-0.2200,c:-0.0360,d:-0.0018}}},
-{id:"SW06",name:"Kapit",state:"Sarawak",region:"sarawak",lat:2.0167,lon:112.9500,c:{2:{a:5.0800,b:0.3500,c:-0.1620,d:0.0068},5:{a:5.3600,b:0.2200,c:-0.1290,d:0.0044},10:{a:5.5600,b:0.1000,c:-0.1000,d:0.0025},20:{a:5.7000,b:0.0200,c:-0.0810,d:0.0014},50:{a:5.9000,b:-0.1200,c:-0.0550,d:-0.0006},100:{a:6.0700,b:-0.2400,c:-0.0340,d:-0.0021}}},
-{id:"SW07",name:"Sri Aman",state:"Sarawak",region:"sarawak",lat:1.2333,lon:111.4667,c:{2:{a:4.9800,b:0.4000,c:-0.1720,d:0.0076},5:{a:5.3000,b:0.2700,c:-0.1380,d:0.0051},10:{a:5.5000,b:0.1400,c:-0.1060,d:0.0029},20:{a:5.6500,b:0.0500,c:-0.0860,d:0.0016},50:{a:5.8500,b:-0.0900,c:-0.0590,d:-0.0003},100:{a:6.0200,b:-0.2100,c:-0.0370,d:-0.0017}}},
-{id:"SW08",name:"Mukah",state:"Sarawak",region:"sarawak",lat:2.9000,lon:112.0500,c:{2:{a:5.0600,b:0.3600,c:-0.1650,d:0.0070},5:{a:5.3400,b:0.2300,c:-0.1310,d:0.0046},10:{a:5.5400,b:0.1100,c:-0.1010,d:0.0026},20:{a:5.6800,b:0.0200,c:-0.0820,d:0.0014},50:{a:5.8800,b:-0.1200,c:-0.0550,d:-0.0006},100:{a:6.0500,b:-0.2400,c:-0.0340,d:-0.0021}}},
-{id:"SW09",name:"Limbang",state:"Sarawak",region:"sarawak",lat:4.7500,lon:115.0000,c:{2:{a:5.1800,b:0.2900,c:-0.1500,d:0.0062},5:{a:5.4400,b:0.1700,c:-0.1180,d:0.0038},10:{a:5.6400,b:0.0600,c:-0.0930,d:0.0021},20:{a:5.7800,b:-0.0200,c:-0.0760,d:0.0010},50:{a:5.9700,b:-0.1500,c:-0.0510,d:-0.0008},100:{a:6.1400,b:-0.2700,c:-0.0300,d:-0.0023}}},
-{id:"SW10",name:"Serian",state:"Sarawak",region:"sarawak",lat:1.0833,lon:110.5667,c:{2:{a:4.9600,b:0.4100,c:-0.1730,d:0.0077},5:{a:5.2900,b:0.2800,c:-0.1390,d:0.0052},10:{a:5.4900,b:0.1400,c:-0.1070,d:0.0029},20:{a:5.6400,b:0.0500,c:-0.0870,d:0.0016},50:{a:5.8400,b:-0.0900,c:-0.0600,d:-0.0003},100:{a:6.0100,b:-0.2100,c:-0.0380,d:-0.0017}}},
-{id:"SW11",name:"Song",state:"Sarawak",region:"sarawak",lat:2.0500,lon:113.5500,c:{2:{a:5.0700,b:0.3600,c:-0.1630,d:0.0069},5:{a:5.3500,b:0.2300,c:-0.1300,d:0.0045},10:{a:5.5500,b:0.1100,c:-0.1000,d:0.0025},20:{a:5.6900,b:0.0200,c:-0.0810,d:0.0014},50:{a:5.8900,b:-0.1200,c:-0.0540,d:-0.0006},100:{a:6.0600,b:-0.2400,c:-0.0330,d:-0.0020}}},
-{id:"SW12",name:"Betong",state:"Sarawak",region:"sarawak",lat:1.5500,lon:111.6500,c:{2:{a:4.9700,b:0.4050,c:-0.1740,d:0.0077},5:{a:5.2900,b:0.2750,c:-0.1395,d:0.0052},10:{a:5.4950,b:0.1450,c:-0.1075,d:0.0029},20:{a:5.6450,b:0.0550,c:-0.0875,d:0.0016},50:{a:5.8450,b:-0.0900,c:-0.0605,d:-0.0003},100:{a:6.0150,b:-0.2100,c:-0.0385,d:-0.0017}}}
-];
-
-// ============================================================
-// MAP SETUP
-// ============================================================
-let map,stationMarkers=[],userMarker,lineLayer=[];
-function initMap(){
-    map=L.map('map').setView([3.5,109],6);
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{attribution:'© OpenStreetMap',maxZoom:18}).addTo(map);
-    renderMarkers(stations);
-}
-function renderMarkers(list){
-    stationMarkers.forEach(m=>map.removeLayer(m));
-    stationMarkers=[];
-    list.forEach(s=>{
-        const m=L.circleMarker([s.lat,s.lon],{radius:5,color:'#fff',weight:2,fillColor:s.region==='sabah'?'#e74c3c':s.region==='sarawak'?'#f39c12':'#2980b9',fillOpacity:0.9}).addTo(map);
-        m.bindPopup(`<b>${s.id}: ${s.name}</b><br>${s.state}<br>Lat: ${s.lat.toFixed(4)}, Lon: ${s.lon.toFixed(4)}`);
-        stationMarkers.push(m);
-    });
-}
-function filterRegion(r,btn){
-    document.querySelectorAll('.filter-btn').forEach(b=>b.classList.remove('active'));
-    btn.classList.add('active');
-    const filtered=r==='all'?stations:stations.filter(s=>s.region===r);
-    renderMarkers(filtered);
-    if(filtered.length){const g=L.latLngBounds(filtered.map(s=>[s.lat,s.lon]));map.fitBounds(g.pad(0.1))}
-}
-
-// ============================================================
-// HAVERSINE
-// ============================================================
-function hav(a1,o1,a2,o2){const R=6371,dA=(a2-a1)*Math.PI/180,dO=(o2-o1)*Math.PI/180,x=Math.sin(dA/2)**2+Math.cos(a1*Math.PI/180)*Math.cos(a2*Math.PI/180)*Math.sin(dO/2)**2;return R*2*Math.atan2(Math.sqrt(x),Math.sqrt(1-x))}
-function brg(a1,o1,a2,o2){const d=(o2-o1)*Math.PI/180,y=Math.sin(d)*Math.cos(a2*Math.PI/180),x=Math.cos(a1*Math.PI/180)*Math.sin(a2*Math.PI/180)-Math.sin(a1*Math.PI/180)*Math.cos(a2*Math.PI/180)*Math.cos(d);let b=(Math.atan2(y,x)*180/Math.PI+360)%360;const dirs=['N','NNE','NE','ENE','E','ESE','SE','SSE','S','SSW','SW','WSW','W','WNW','NW','NNW'];return dirs[Math.round(b/22.5)%16]+' ('+b.toFixed(1)+'°)'}
-function setLoc(a,o){document.getElementById('lat').value=a.toFixed(4);document.getElementById('lon').value=o.toFixed(4)}
-
-// ============================================================
-// CALCULATE
-// ============================================================
-let lastNearest=null;
-function calcDist(){
-    const a=parseFloat(document.getElementById('lat').value),o=parseFloat(document.getElementById('lon').value);
-    if(isNaN(a)||isNaN(o)){alert('Enter valid coordinates!');return}
-    const r=stations.map(s=>({...s,d:hav(a,o,s.lat,s.lon)})).sort((a,b)=>a.d-b.d).slice(0,3);
-    lastNearest=r[0];
-    showResults(r,a,o);
-    // Draw on map
-    if(userMarker)map.removeLayer(userMarker);
-    lineLayer.forEach(l=>map.removeLayer(l));lineLayer=[];
-    userMarker=L.marker([a,o],{icon:L.divIcon({className:'',html:'<div style="background:#e74c3c;width:16px;height:16px;border-radius:50%;border:3px solid #fff;box-shadow:0 2px 6px rgba(0,0,0,.4)"></div>',iconSize:[16,16],iconAnchor:[8,8]})}).addTo(map).bindPopup('<b>Your Site</b>');
-    const colors=['#27ae60','#f39c12','#e67e22'];
-    r.forEach((s,i)=>{
-        const line=L.polyline([[a,o],[s.lat,s.lon]],{color:colors[i],weight:3,dashArray:i===0?'':'6 6',opacity:0.8}).addTo(map);
-        line.bindPopup(`Distance to ${s.name}: <b>${s.d.toFixed(2)} km</b>`);
-        lineLayer.push(line);
-    });
-    const pts=[[a,o],...r.map(s=>[s.lat,s.lon])];
-    map.fitBounds(L.latLngBounds(pts).pad(0.15));
-    document.getElementById('results').classList.add('active');
-}
-
-function showResults(st,a,o){
-    const el=document.getElementById('stationResults');el.innerHTML='';
-    st.forEach((s,i)=>{
-        const m=i===0?'🥇':i===1?'🥈':'🥉';
-        el.innerHTML+=`<div class="station-card${i===0?' nearest':''}"><div class="station-header"><div><span class="station-id">${s.id}</span> <span class="station-name">${m} ${s.name}</span> <span style="color:#888;font-size:.85rem">${s.state} · ${s.region}</span></div><div class="distance-badge">📏 ${s.d.toFixed(2)} km</div></div><div class="station-info"><div class="info-item"><div class="info-label">Latitude</div><div class="info-value">${s.lat.toFixed(4)}°N</div></div><div class="info-item"><div class="info-label">Longitude</div><div class="info-value">${s.lon.toFixed(4)}°E</div></div><div class="info-item"><div class="info-label">Distance</div><div class="info-value">${s.d.toFixed(2)} km</div></div><div class="info-item"><div class="info-label">Bearing</div><div class="info-value">${brg(a,o,s.lat,s.lon)}</div></div></div></div>`;
-    });
-    showIDF(st[0]);
-}
-
-function showIDF(s){
-    document.getElementById('coeffTitle').textContent=`Coefficients — ${s.name}, ${s.state} (10-yr ARI)`;
-    const g=document.getElementById('coeffGrid');g.innerHTML='';
-    const c=s.c[10];
-    [{s:'a',n:'Constant a',v:c.a.toFixed(4)},{s:'b',n:'Coefficient b',v:c.b.toFixed(4)},{s:'c',n:'Coefficient c',v:c.c.toFixed(4)},{s:'d',n:'Coefficient d',v:c.d.toFixed(4)}].forEach(x=>{
-        g.innerHTML+=`<div class="coeff-card"><div class="coeff-symbol">${x.s}</div><div class="coeff-name">${x.n}</div><div class="coeff-value">${x.v}</div></div>`;
-    });
-    const b=document.getElementById('idfBody');b.innerHTML='';
-    [2,5,10,20,50,100].forEach(a=>{
-        const cc=s.c[a];b.innerHTML+=`<tr><td><strong>${a} yr</strong></td><td>${cc.a.toFixed(4)}</td><td>${cc.b.toFixed(4)}</td><td>${cc.c.toFixed(4)}</td><td>${cc.d.toFixed(4)}</td></tr>`;
-    });
-}
-
-// ============================================================
-// IDF CALCULATOR
-// ============================================================
-function calcIDF(){
-    if(!lastNearest){alert('Find nearest stations first!');return}
-    const dur=parseFloat(document.getElementById('calcDur').value);
-    const ari=parseInt(document.getElementById('calcARI').value);
-    if(isNaN(dur)||dur<30||dur>1000){alert('Duration must be 30–1000 minutes!');return}
-    const cc=lastNearest.c[ari];if(!cc){alert('ARI not available!');return}
-    const lnt=Math.log(dur);
-    const lnRI=cc.a+cc.b*lnt+cc.c*lnt*lnt+cc.d*lnt*lnt*lnt;
-    const intensity=Math.exp(lnRI);
-    document.getElementById('calcIntensity').textContent=intensity.toFixed(2)+' mm/hr';
-    document.getElementById('calcDetail').textContent=`Station: ${lastNearest.name} | Duration: ${dur} min | ARI: ${ari} years`;
-    document.getElementById('calcResult').classList.add('active');
-}
-
-function clearRes(){
-    document.getElementById('lat').value='';document.getElementById('lon').value='';
-    document.getElementById('results').classList.remove('active');
-    document.getElementById('calcResult').classList.remove('active');
-    if(userMarker)map.removeLayer(userMarker);
-    lineLayer.forEach(l=>map.removeLayer(l));lineLayer=[];
-    lastNearest=null;
-}
-
-document.addEventListener('keypress',e=>{if(e.key==='Enter')calcDist()});
-initMap();
-</script>
+  <!-- ═══════════════════════════════════════════════════ -->
+  <!-- SCRIPTS (order matters)                            -->
+  <!-- ═══════════════════════════════════════════════════ -->
+  <script src="js/stations.js"></script>
+  <script src="js/haversine.js"></script>
+  <script src="js/idf-calculator.js"></script>
+  <script src="js/map.js"></script>
+  <script src="js/app.js"></script>
 </body>
 </html>
