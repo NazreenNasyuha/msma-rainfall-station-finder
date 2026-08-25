@@ -35,12 +35,13 @@
         <select id="modeSwitch" style="
           padding:8px 16px;border:2px solid #2980b9;border-radius:8px;
           font-size:0.95rem;font-weight:600;color:#1a5276;background:#f0f7ff;
-          cursor:pointer;min-width:280px
+          cursor:pointer;min-width:320px
         ">
+          <option value="highari" selected>High ARI — λ, κ, θ, η — Extended Stations (150+)</option>
+          <option value="lowari">Low ARI — λ, κ, θ, η — Extended Stations (150+)</option>
           <option value="standard">Standard MSMA — Polynomial (a, b, c, d) — Urban Centres</option>
-          <option value="highari">Low ARI — λ, κ, θ, η — Extended Station Network (150+)</option>
         </select>
-        <span style="color:#888;font-size:.85rem" id="modeHint">35 urban centres, 6 ARIs (2–100 yr)</span>
+        <span style="color:#888;font-size:.85rem" id="modeHint">150+ stations, Lambda/Kappa/Theta/Eta coefficients (High ARI)</span>
       </div>
     </div>
 
@@ -124,18 +125,18 @@
         <h2 class="card-title">📈 IDF Coefficients — Nearest Station</h2>
 
         <div class="idf-equation">
-          <p style="color:#888;font-size:.85rem;margin-bottom:6px" id="eqLabel">MSMA 2nd Edition IDF Polynomial (Eq. 13.2) — Standard</p>
-          <div class="equation" id="eqFormula">ln(RI<sub>t</sub>) = a + b·ln(t) + c·[ln(t)]² + d·[ln(t)]³</div>
-          <p style="color:#888;font-size:.8rem;margin-top:6px" id="eqDesc">RI<sub>t</sub> = Rainfall Intensity (mm/hr), t = Duration (min), valid 30–1000 min, ARI 2–100 years</p>
+          <p style="color:#888;font-size:.85rem;margin-bottom:6px" id="eqLabel">High ARI IDF Equation (Appendix 13.A)</p>
+          <div class="equation" id="eqFormula">I<sub>T</sub>(t) = λ × t<sup>−κ</sup> × [1 + θ × K<sub>T</sub>]<sup>η</sup></div>
+          <p style="color:#888;font-size:.8rem;margin-top:6px" id="eqDesc">λ, κ, θ, η = Station coefficients | K<sub>T</sub> = Gumbel frequency factor | t = Duration (min), valid 30–1000 min</p>
         </div>
 
-        <h3 style="color:#1a5276;font-size:1rem;margin-bottom:10px" id="coeffTitle">Coefficients (10-yr ARI)</h3>
+        <h3 style="color:#1a5276;font-size:1rem;margin-bottom:10px" id="coeffTitle">Select a station to view coefficients</h3>
         <div class="coeff-grid" id="coeffGrid"></div>
 
         <div style="overflow-x:auto">
           <table class="idf-table">
             <thead id="idfTableHead">
-              <tr><th>ARI (yr)</th><th>a</th><th>b</th><th>c</th><th>d</th></tr>
+              <tr><th>ARI (yr)</th><th>λ</th><th>κ</th><th>θ</th><th>η</th></tr>
             </thead>
             <tbody id="idfBody"></tbody>
           </table>
@@ -185,8 +186,7 @@
         </div>
 
         <div class="formula-note" id="formulaNote">
-          <strong>📝 Short Duration (&lt; 30 min):</strong>
-          Use Table 13.3 &amp; Eq. 13.3 from MSMA 2nd Edition. The polynomial is valid for 30 ≤ t ≤ 1000 min only.
+          <strong>📝 Note:</strong> The High ARI formula uses Lambda (λ), Kappa (κ), Theta (θ), and Eta (η) coefficients. Valid for 30 ≤ t ≤ 1000 min. K<sub>T</sub> = −ln(−ln(1 − 1/T)) from Gumbel distribution.
         </div>
       </div>
     </div>
@@ -197,7 +197,8 @@
     <footer>
       <p><strong>MSMA Rainfall Station Finder</strong></p>
       <p>Data: MSMA 2nd Edition (DID, 2012) &amp; SUStoM (DID, 2018)</p>
-      <p style="margin-top:8px;font-size:.8rem;color:#aaa">For preliminary reference only. Verify with official DID publications for design use.</p>
+      <p style="margin-top:4px;font-size:.8rem;color:#aaa">IDF Modes: High ARI | Low ARI | Standard (polynomial)</p>
+      <p style="margin-top:4px;font-size:.8rem;color:#aaa">For preliminary reference only. Verify with official DID publications for design use.</p>
       <p style="font-size:.78rem;color:#bbb;margin-top:4px">© 2024 MIT License</p>
     </footer>
   </div>
@@ -206,6 +207,7 @@
   <!-- SCRIPTS (order matters)                            -->
   <!-- ═══════════════════════════════════════════════════ -->
   <script src="js/stations.js"></script>
+  <script src="js/high-ari-stations.js"></script>
   <script src="js/low-ari-stations.js"></script>
   <script src="js/haversine.js"></script>
   <script src="js/idf-calculator.js"></script>
@@ -216,11 +218,12 @@
   <script>
     document.getElementById("modeSwitch").addEventListener("change", function() {
       const hint = document.getElementById("modeHint");
-      if (this.value === "highari") {
-        hint.textContent = "150+ stations, Lambda/Kappa/Theta/Eta coefficients (Low ARI)";
-      } else {
-        hint.textContent = "35 urban centres, 6 ARIs (2–100 yr)";
-      }
+      const labels = {
+        highari: "150+ stations, Lambda/Kappa/Theta/Eta coefficients (High ARI)",
+        lowari: "150+ stations, Lambda/Kappa/Theta/Eta coefficients (Low ARI)",
+        standard: "35 urban centres, polynomial a/b/c/d (Standard MSMA)"
+      };
+      hint.textContent = labels[this.value] || "";
     });
   </script>
 </body>

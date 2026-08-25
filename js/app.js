@@ -2,7 +2,7 @@
  * MSMA Rainfall Station Finder — Main Application
  *
  * Coordinates all modules: stations, haversine, IDF, map, and chart.
- * Supports two modes: Standard (polynomial) and High ARI (Lambda/Kappa/Theta/Eta).
+ * Supports three modes: High ARI (default), Low ARI, and Standard (polynomial).
  */
 
 const App = (() => {
@@ -10,7 +10,7 @@ const App = (() => {
   let nearestStations = [];
   let selectedStation = null;
   let idfChart = null;
-  let currentMode = "standard"; // "standard" or "highari"
+  let currentMode = "highari"; // "highari", "lowari", or "standard"
 
   /** Quick location presets */
   const QUICK_LOCATIONS = [
@@ -32,7 +32,9 @@ const App = (() => {
    * Get the active station list based on current mode
    */
   const getActiveStations = () => {
-    return currentMode === "highari" ? LOW_ARI_STATIONS : STATIONS;
+    if (currentMode === "lowari") return LOW_ARI_STATIONS;
+    if (currentMode === "highari") return HIGH_ARI_STATIONS;
+    return STATIONS; // standard
   };
 
   /**
@@ -40,7 +42,7 @@ const App = (() => {
    */
   const init = () => {
     MapModule.init("map");
-    MapModule.renderStations(STATIONS);
+    MapModule.renderStations(HIGH_ARI_STATIONS); // default to High ARI
     bindEvents();
     renderQuickLocations();
     updateModeUI();
@@ -86,28 +88,30 @@ const App = (() => {
    * Update UI elements based on current mode
    */
   const updateModeUI = () => {
-    const isHighARI = currentMode === "highari";
     const eqLabel = document.getElementById("eqLabel");
     const eqFormula = document.getElementById("eqFormula");
     const eqDesc = document.getElementById("eqDesc");
     const idfTableHead = document.getElementById("idfTableHead");
     const coeffGrid = document.getElementById("coeffGrid");
-    const calcARILabel = document.getElementById("calcARILabel");
     const formulaNote = document.getElementById("formulaNote");
 
-    if (isHighARI) {
+    if (currentMode === "highari") {
+      eqLabel.textContent = "High ARI IDF Equation (Appendix 13.A)";
+      eqFormula.innerHTML = "I<sub>T</sub>(t) = λ × t<sup>−κ</sup> × [1 + θ × K<sub>T</sub>]<sup>η</sup>";
+      eqDesc.innerHTML = "λ, κ, θ, η = Station coefficients &nbsp;|&nbsp; K<sub>T</sub> = Gumbel frequency factor &nbsp;|&nbsp; t = Duration (min), valid 30–1000 min";
+      idfTableHead.innerHTML = "<tr><th>ARI (yr)</th><th>λ</th><th>κ</th><th>θ</th><th>η</th></tr>";
+      formulaNote.innerHTML = "<strong>📝 Note:</strong> The High ARI formula uses Lambda (λ), Kappa (κ), Theta (θ), and Eta (η) coefficients. Valid for 30 ≤ t ≤ 1000 min. K<sub>T</sub> = −ln(−ln(1 − 1/T)) from Gumbel distribution.";
+    } else if (currentMode === "lowari") {
       eqLabel.textContent = "Low ARI IDF Equation (Appendix 13.A)";
       eqFormula.innerHTML = "I<sub>T</sub>(t) = λ × t<sup>−κ</sup> × [1 + θ × K<sub>T</sub>]<sup>η</sup>";
       eqDesc.innerHTML = "λ, κ, θ, η = Station coefficients &nbsp;|&nbsp; K<sub>T</sub> = Gumbel frequency factor &nbsp;|&nbsp; t = Duration (min), valid 30–1000 min";
       idfTableHead.innerHTML = "<tr><th>ARI (yr)</th><th>λ</th><th>κ</th><th>θ</th><th>η</th></tr>";
-      calcARILabel.textContent = "Average Recurrence Interval (ARI)";
       formulaNote.innerHTML = "<strong>📝 Note:</strong> The Low ARI formula uses Lambda (λ), Kappa (κ), Theta (θ), and Eta (η) coefficients. Valid for 30 ≤ t ≤ 1000 min. K<sub>T</sub> = −ln(−ln(1 − 1/T)) from Gumbel distribution.";
     } else {
       eqLabel.textContent = "MSMA 2nd Edition IDF Polynomial (Eq. 13.2)";
       eqFormula.innerHTML = "ln(RI<sub>t</sub>) = a + b·ln(t) + c·[ln(t)]² + d·[ln(t)]³";
       eqDesc.innerHTML = "RI<sub>t</sub> = Rainfall Intensity (mm/hr), t = Duration (min), valid 30–1000 min, ARI 2–100 years";
       idfTableHead.innerHTML = "<tr><th>ARI (yr)</th><th>a</th><th>b</th><th>c</th><th>d</th></tr>";
-      calcARILabel.textContent = "Average Recurrence Interval (ARI)";
       formulaNote.innerHTML = "<strong>📝 Short Duration (&lt; 30 min):</strong> Use Table 13.3 &amp; Eq. 13.3 from MSMA 2nd Edition. The polynomial is valid for 30 ≤ t ≤ 1000 min only.";
     }
 
@@ -217,10 +221,10 @@ const App = (() => {
     document.getElementById("coeffTitle").textContent =
       `Coefficients — ${station.name}, ${station.state}`;
 
-    if (currentMode === "highari") {
-      renderHighARICoefficients(station);
-    } else {
+    if (currentMode === "standard") {
       renderStandardCoefficients(station);
+    } else {
+      renderLambdaCoefficients(station);
     }
   };
 
@@ -228,7 +232,6 @@ const App = (() => {
    * Render Standard mode coefficients (a, b, c, d per ARI)
    */
   const renderStandardCoefficients = (station) => {
-    // Coefficient cards (10-year ARI default)
     const c10 = station.idf?.[10];
     if (!c10) return;
 
@@ -250,7 +253,6 @@ const App = (() => {
       )
       .join("");
 
-    // Full table
     const tbody = document.getElementById("idfBody");
     tbody.innerHTML = IDFCalculator.VALID_ARIS.map((ari) => {
       const cc = station.idf[ari];
@@ -267,10 +269,9 @@ const App = (() => {
   };
 
   /**
-   * Render High ARI mode coefficients (λ, κ, θ, η)
+   * Render Lambda/Kappa/Theta/Eta coefficients (for High ARI or Low ARI)
    */
-  const renderHighARICoefficients = (station) => {
-    // Coefficient cards
+  const renderLambdaCoefficients = (station) => {
     const grid = document.getElementById("coeffGrid");
     grid.innerHTML = [
       { sym: "λ", name: "Lambda", val: station.lambda.toFixed(3) },
@@ -289,7 +290,6 @@ const App = (() => {
       )
       .join("");
 
-    // Single row table (same coefficients for all ARIs, frequency comes from Gumbel)
     const tbody = document.getElementById("idfBody");
     tbody.innerHTML = `
       <tr>
@@ -308,10 +308,10 @@ const App = (() => {
   const renderIDFChart = (station) => {
     let chartData;
 
-    if (currentMode === "highari") {
-      chartData = IDFCalculator.generateHighARIChartData(station);
-    } else {
+    if (currentMode === "standard") {
       chartData = IDFCalculator.generateChartData(station);
+    } else {
+      chartData = IDFCalculator.generateHighARIChartData(station);
     }
 
     if (!chartData) return;
@@ -403,15 +403,15 @@ const App = (() => {
 
     let intensity;
 
-    if (currentMode === "highari") {
-      intensity = IDFCalculator.calculateHighARI(selectedStation, dur, ari);
-    } else {
+    if (currentMode === "standard") {
       const coeffs = selectedStation.idf?.[ari];
       if (!coeffs) {
         showAlert("ARI not available for this station.");
         return;
       }
       intensity = IDFCalculator.calculateStandard(coeffs, dur);
+    } else {
+      intensity = IDFCalculator.calculateHighARI(selectedStation, dur, ari);
     }
 
     if (intensity === null) {

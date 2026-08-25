@@ -14,19 +14,22 @@ Find the nearest Malaysian rainfall stations, view IDF curves, and calculate rai
 
 ## Features
 
-- **Station Finder** — Haversine distance calculation to 200+ stations
+- **Station Finder** — Haversine distance calculation to 300+ stations
 - **Interactive Map** — Leaflet.js with markers, distance lines, and region filters
 - **IDF Curves** — Chart.js log-log visualization for all ARI values
 - **IDF Calculator** — Rainfall intensity (mm/hr) for 30–1000 min duration
-- **Two IDF Modes** — Standard polynomial & Low ARI (λ, κ, θ, η)
+- **Three IDF Modes** — High ARI (default), Low ARI, and Standard polynomial
 - **East Malaysia** — Includes Sabah & Sarawak stations (SUStoM data)
 
 ## IDF Modes
 
 | Mode | Coefficients | Equation | Coverage |
 |------|-------------|----------|----------|
-| **Standard** | a, b, c, d | ln(RI_t) = a + b·ln(t) + c·[ln(t)]² + d·[ln(t)]³ | 35 urban centres |
+| **High ARI** ⭐ | λ, κ, θ, η | I_T(t) = λ × t^(-κ) × [1 + θ × K_T]^η | 150+ extended stations |
 | **Low ARI** | λ, κ, θ, η | I_T(t) = λ × t^(-κ) × [1 + θ × K_T]^η | 150+ extended stations |
+| **Standard** | a, b, c, d | ln(RI_t) = a + b·ln(t) + c·[ln(t)]² + d·[ln(t)]³ | 35 urban centres |
+
+> ⭐ High ARI is the default mode when the page loads.
 
 ## Data Sources
 
