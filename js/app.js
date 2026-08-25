@@ -2,6 +2,7 @@
  * MSMA Rainfall Station Finder — Main Application
  *
  * Coordinates all modules: stations, haversine, IDF, map, and chart.
+ * Supports two modes: Standard (polynomial) and High ARI (Lambda/Kappa/Theta/Eta).
  */
 
 const App = (() => {
@@ -9,6 +10,7 @@ const App = (() => {
   let nearestStations = [];
   let selectedStation = null;
   let idfChart = null;
+  let currentMode = "standard"; // "standard" or "highari"
 
   /** Quick location presets */
   const QUICK_LOCATIONS = [
@@ -27,6 +29,13 @@ const App = (() => {
   ];
 
   /**
+   * Get the active station list based on current mode
+   */
+  const getActiveStations = () => {
+    return currentMode === "highari" ? HIGH_ARI_STATIONS : STATIONS;
+  };
+
+  /**
    * Initialize the application
    */
   const init = () => {
@@ -34,6 +43,7 @@ const App = (() => {
     MapModule.renderStations(STATIONS);
     bindEvents();
     renderQuickLocations();
+    updateModeUI();
   };
 
   /**
@@ -56,9 +66,54 @@ const App = (() => {
       btn.addEventListener("click", (e) => {
         document.querySelectorAll("[data-region]").forEach((b) => b.classList.remove("active"));
         e.target.classList.add("active");
-        MapModule.filterByRegion(e.target.dataset.region, STATIONS);
+        MapModule.filterByRegion(e.target.dataset.region, getActiveStations());
       });
     });
+
+    // Mode switcher
+    document.getElementById("modeSwitch").addEventListener("change", (e) => {
+      currentMode = e.target.value;
+      updateModeUI();
+      MapModule.renderStations(getActiveStations());
+      // Re-run search if coordinates are set
+      if (nearestStations.length > 0) {
+        findNearest();
+      }
+    });
+  };
+
+  /**
+   * Update UI elements based on current mode
+   */
+  const updateModeUI = () => {
+    const isHighARI = currentMode === "highari";
+    const eqLabel = document.getElementById("eqLabel");
+    const eqFormula = document.getElementById("eqFormula");
+    const eqDesc = document.getElementById("eqDesc");
+    const idfTableHead = document.getElementById("idfTableHead");
+    const coeffGrid = document.getElementById("coeffGrid");
+    const calcARILabel = document.getElementById("calcARILabel");
+    const formulaNote = document.getElementById("formulaNote");
+
+    if (isHighARI) {
+      eqLabel.textContent = "High ARI IDF Equation (Appendix 13.A)";
+      eqFormula.innerHTML = "I<sub>T</sub>(t) = λ × t<sup>−κ</sup> × [1 + θ × K<sub>T</sub>]<sup>η</sup>";
+      eqDesc.innerHTML = "λ, κ, θ, η = Station coefficients &nbsp;|&nbsp; K<sub>T</sub> = Gumbel frequency factor &nbsp;|&nbsp; t = Duration (min), valid 30–1000 min";
+      idfTableHead.innerHTML = "<tr><th>ARI (yr)</th><th>λ</th><th>κ</th><th>θ</th><th>η</th></tr>";
+      calcARILabel.textContent = "Average Recurrence Interval (ARI)";
+      formulaNote.innerHTML = "<strong>📝 Note:</strong> The High ARI formula uses Lambda (λ), Kappa (κ), Theta (θ), and Eta (η) coefficients. Valid for 30 ≤ t ≤ 1000 min. K<sub>T</sub> = −ln(−ln(1 − 1/T)) from Gumbel distribution.";
+    } else {
+      eqLabel.textContent = "MSMA 2nd Edition IDF Polynomial (Eq. 13.2)";
+      eqFormula.innerHTML = "ln(RI<sub>t</sub>) = a + b·ln(t) + c·[ln(t)]² + d·[ln(t)]³";
+      eqDesc.innerHTML = "RI<sub>t</sub> = Rainfall Intensity (mm/hr), t = Duration (min), valid 30–1000 min, ARI 2–100 years";
+      idfTableHead.innerHTML = "<tr><th>ARI (yr)</th><th>a</th><th>b</th><th>c</th><th>d</th></tr>";
+      calcARILabel.textContent = "Average Recurrence Interval (ARI)";
+      formulaNote.innerHTML = "<strong>📝 Short Duration (&lt; 30 min):</strong> Use Table 13.3 &amp; Eq. 13.3 from MSMA 2nd Edition. The polynomial is valid for 30 ≤ t ≤ 1000 min only.";
+    }
+
+    // Clear coefficient display
+    coeffGrid.innerHTML = "";
+    document.getElementById("coeffTitle").textContent = "Select a station to view coefficients";
   };
 
   /**
@@ -92,8 +147,10 @@ const App = (() => {
       return;
     }
 
+    const stations = getActiveStations();
+
     // Find nearest
-    nearestStations = Haversine.findNearest(lat, lon, STATIONS, 3);
+    nearestStations = Haversine.findNearest(lat, lon, stations, 3);
     selectedStation = nearestStations[0];
 
     // Update UI
@@ -160,8 +217,21 @@ const App = (() => {
     document.getElementById("coeffTitle").textContent =
       `Coefficients — ${station.name}, ${station.state}`;
 
+    if (currentMode === "highari") {
+      renderHighARICoefficients(station);
+    } else {
+      renderStandardCoefficients(station);
+    }
+  };
+
+  /**
+   * Render Standard mode coefficients (a, b, c, d per ARI)
+   */
+  const renderStandardCoefficients = (station) => {
     // Coefficient cards (10-year ARI default)
-    const c10 = station.idf[10];
+    const c10 = station.idf?.[10];
+    if (!c10) return;
+
     const grid = document.getElementById("coeffGrid");
     grid.innerHTML = [
       { sym: "a", name: "Constant a", val: c10.a.toFixed(4) },
@@ -197,10 +267,53 @@ const App = (() => {
   };
 
   /**
+   * Render High ARI mode coefficients (λ, κ, θ, η)
+   */
+  const renderHighARICoefficients = (station) => {
+    // Coefficient cards
+    const grid = document.getElementById("coeffGrid");
+    grid.innerHTML = [
+      { sym: "λ", name: "Lambda", val: station.lambda.toFixed(3) },
+      { sym: "κ", name: "Kappa", val: station.kappa.toFixed(3) },
+      { sym: "θ", name: "Theta", val: station.theta.toFixed(3) },
+      { sym: "η", name: "Eta", val: station.eta.toFixed(3) },
+    ]
+      .map(
+        (x) => `
+      <div class="coeff-card">
+        <div class="coeff-symbol">${x.sym}</div>
+        <div class="coeff-name">${x.name}</div>
+        <div class="coeff-value">${x.val}</div>
+      </div>
+    `
+      )
+      .join("");
+
+    // Single row table (same coefficients for all ARIs, frequency comes from Gumbel)
+    const tbody = document.getElementById("idfBody");
+    tbody.innerHTML = `
+      <tr>
+        <td><strong>All ARIs</strong></td>
+        <td>${station.lambda.toFixed(3)}</td>
+        <td>${station.kappa.toFixed(3)}</td>
+        <td>${station.theta.toFixed(3)}</td>
+        <td>${station.eta.toFixed(3)}</td>
+      </tr>
+    `;
+  };
+
+  /**
    * Render IDF curve chart
    */
   const renderIDFChart = (station) => {
-    const chartData = IDFCalculator.generateChartData(station);
+    let chartData;
+
+    if (currentMode === "highari") {
+      chartData = IDFCalculator.generateHighARIChartData(station);
+    } else {
+      chartData = IDFCalculator.generateChartData(station);
+    }
+
     if (!chartData) return;
 
     const ctx = document.getElementById("idfChart").getContext("2d");
@@ -288,13 +401,19 @@ const App = (() => {
       return;
     }
 
-    const coeffs = selectedStation.idf[ari];
-    if (!coeffs) {
-      showAlert("ARI not available for this station.");
-      return;
+    let intensity;
+
+    if (currentMode === "highari") {
+      intensity = IDFCalculator.calculateHighARI(selectedStation, dur, ari);
+    } else {
+      const coeffs = selectedStation.idf?.[ari];
+      if (!coeffs) {
+        showAlert("ARI not available for this station.");
+        return;
+      }
+      intensity = IDFCalculator.calculateStandard(coeffs, dur);
     }
 
-    const intensity = IDFCalculator.calculate(coeffs, dur);
     if (intensity === null) {
       showAlert("Calculation error. Check your inputs.");
       return;
