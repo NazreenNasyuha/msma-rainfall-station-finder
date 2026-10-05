@@ -1,0 +1,307 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>MSMA Verification Suite</title>
+</head>
+<body>
+  <h1>Running MSMA Verification...</h1>
+  <div id="results"></div>
+
+  <script src="js/stations.js"></script>
+  <script src="js/high-ari-stations.js"></script>
+  <script src="js/low-ari-stations.js"></script>
+  <script src="js/haversine.js"></script>
+  <script src="js/idf-calculator.js"></script>
+
+  <script>
+    const log = (msg) => {
+      console.log(msg);
+      const div = document.createElement("div");
+      div.textContent = msg;
+      document.getElementById("results").appendChild(div);
+    };
+
+    const report = {
+      passed: 0,
+      failed: 0,
+      warnings: 0,
+      details: []
+    };
+
+    const assert = (condition, testName, extraInfo = "") => {
+      if (condition) {
+        report.passed++;
+      } else {
+        report.failed++;
+        report.details.push(`[FAIL] ${testName}: ${extraInfo}`);
+        console.error(`[FAIL] ${testName}: ${extraInfo}`);
+      }
+    };
+
+    const warn = (testName, extraInfo = "") => {
+      report.warnings++;
+      report.details.push(`[WARN] ${testName}: ${extraInfo}`);
+      console.warn(`[WARN] ${testName}: ${extraInfo}`);
+    };
+
+    log("=== STARTING MSMA VERIFICATION SUITE ===");
+
+    // ─────────────────────────────────────────────────────────────
+    // 1. VERIFICATION OF COORDINATES
+    // ─────────────────────────────────────────────────────────────
+    log("\n--- 1. VERIFYING STATION COORDINATES ---");
+
+    const datasets = [
+      { name: "STATIONS (Standard)", data: STATIONS },
+      { name: "HIGH_ARI_STATIONS", data: HIGH_ARI_STATIONS },
+      { name: "LOW_ARI_STATIONS", data: LOW_ARI_STATIONS }
+    ];
+
+    datasets.forEach(ds => {
+      log(`Checking ${ds.name} (${ds.data.length} stations)...`);
+      const seenIds = new Set();
+
+      ds.data.forEach((s, idx) => {
+        // ID check
+        assert(s.id && typeof s.id === "string", `${ds.name} [${idx}] ID exists`, `Station: ${s.name}`);
+
+        // Name check
+        assert(s.name && typeof s.name === "string", `${ds.name} [${s.id}] Name exists`, `ID: ${s.id}`);
+
+        // State check
+        assert(s.state && typeof s.state === "string", `${ds.name} [${s.id}] State exists`, `ID: ${s.id}`);
+
+        // Region check
+        assert(["peninsular", "sabah", "sarawak"].includes(s.region), `${ds.name} [${s.id}] Region valid`, `Region: ${s.region}`);
+
+        // Lat/Lon numeric check
+        assert(typeof s.lat === "number" && !isNaN(s.lat), `${ds.name} [${s.id}] Lat is numeric`, `Lat: ${s.lat}`);
+        assert(typeof s.lon === "number" && !isNaN(s.lon), `${ds.name} [${s.id}] Lon is numeric`, `Lon: ${s.lon}`);
+
+        // Bounds check by region
+        if (s.region === "peninsular") {
+          const validLat = s.lat >= 1.0 && s.lat <= 7.0;
+          const validLon = s.lon >= 99.5 && s.lon <= 104.8;
+          assert(validLat, `${ds.name} [${s.id}: ${s.name}] Peninsular Lat bounds (1.0-7.0)`, `Lat: ${s.lat}`);
+          assert(validLon, `${ds.name} [${s.id}: ${s.name}] Peninsular Lon bounds (99.5-104.8)`, `Lon: ${s.lon}`);
+        } else if (s.region === "sabah") {
+          const validLat = s.lat >= 4.0 && s.lat <= 7.5;
+          const validLon = s.lon >= 115.0 && s.lon <= 119.5;
+          assert(validLat, `${ds.name} [${s.id}: ${s.name}] Sabah Lat bounds (4.0-7.5)`, `Lat: ${s.lat}`);
+          assert(validLon, `${ds.name} [${s.id}: ${s.name}] Sabah Lon bounds (115.0-119.5)`, `Lon: ${s.lon}`);
+        } else if (s.region === "sarawak") {
+          const validLat = s.lat >= 0.8 && s.lat <= 5.5;
+          const validLon = s.lon >= 109.5 && s.lon <= 116.0;
+          assert(validLat, `${ds.name} [${s.id}: ${s.name}] Sarawak Lat bounds (0.8-5.5)`, `Lat: ${s.lat}`);
+          assert(validLon, `${ds.name} [${s.id}: ${s.name}] Sarawak Lon bounds (109.5-116.0)`, `Lon: ${s.lon}`);
+        }
+
+        seenIds.add(s.id);
+      });
+    });
+
+    // State Bounds Summary
+    const stateBounds = {};
+    [...STATIONS, ...HIGH_ARI_STATIONS, ...LOW_ARI_STATIONS].forEach(s => {
+      if (!stateBounds[s.state]) {
+        stateBounds[s.state] = { count: 0, minLat: 99, maxLat: -99, minLon: 999, maxLon: -999 };
+      }
+      const b = stateBounds[s.state];
+      b.count++;
+      b.minLat = Math.min(b.minLat, s.lat);
+      b.maxLat = Math.max(b.maxLat, s.lat);
+      b.minLon = Math.min(b.minLon, s.lon);
+      b.maxLon = Math.max(b.maxLon, s.lon);
+    });
+
+    log("\n[STATE COORDINATE BOUNDS SUMMARY]");
+    Object.keys(stateBounds).sort().forEach(st => {
+      const b = stateBounds[st];
+      log(`• ${st} (${b.count} stns): Lat [${b.minLat.toFixed(2)}, ${b.maxLat.toFixed(2)}], Lon [${b.minLon.toFixed(2)}, ${b.maxLon.toFixed(2)}]`);
+    });
+
+    // ─────────────────────────────────────────────────────────────
+    // 2. VERIFICATION OF TABLES & COEFFICIENTS
+    // ─────────────────────────────────────────────────────────────
+    log("\n--- 2. VERIFYING COEFFICIENTS & MSMA TABLES ---");
+
+    // Standard Polynomial Stations Table Check
+    STATIONS.forEach(s => {
+      assert(s.idf && typeof s.idf === "object", `Standard [${s.id}] has idf object`);
+      [2, 5, 10, 20, 50, 100].forEach(ari => {
+        const c = s.idf[ari];
+        assert(c && typeof c === "object", `Standard [${s.id}] has ARI ${ari}`);
+        if (c) {
+          assert(typeof c.a === "number" && !isNaN(c.a), `Standard [${s.id}] a is number`);
+          assert(typeof c.b === "number" && !isNaN(c.b), `Standard [${s.id}] b is number`);
+          assert(typeof c.c === "number" && !isNaN(c.c), `Standard [${s.id}] c is number`);
+          assert(typeof c.d === "number" && !isNaN(c.d), `Standard [${s.id}] d is number`);
+        }
+      });
+    });
+
+    // High ARI & Low ARI Stations Table Check
+    [
+      { name: "HIGH_ARI_STATIONS", data: HIGH_ARI_STATIONS },
+      { name: "LOW_ARI_STATIONS", data: LOW_ARI_STATIONS }
+    ].forEach(ds => {
+      ds.data.forEach(s => {
+        assert(typeof s.lambda === "number" && s.lambda > 0, `${ds.name} [${s.id}] lambda > 0`, `lambda: ${s.lambda}`);
+        assert(typeof s.kappa === "number" && s.kappa > 0, `${ds.name} [${s.id}] kappa > 0`, `kappa: ${s.kappa}`);
+        assert(typeof s.theta === "number" && s.theta >= 0, `${ds.name} [${s.id}] theta >= 0`, `theta: ${s.theta}`);
+        assert(typeof s.eta === "number" && s.eta > 0, `${ds.name} [${s.id}] eta > 0`, `eta: ${s.eta}`);
+      });
+    });
+
+    // MSMA Table 13.3 Factors Check
+    log("Verifying MSMA Table 13.3 F_D values...");
+    const T13_3 = IDFCalculator.TABLE_13_3;
+    assert(T13_3 && T13_3.factors, "Table 13.3 exists in IDFCalculator");
+    assert(T13_3.factors[100][0] === 2.08, "Table 13.3: 2P24h < 100, d=5 is 2.08");
+    assert(T13_3.factors[120][0] === 1.85, "Table 13.3: 2P24h = 120, d=5 is 1.85");
+    assert(T13_3.factors[150][0] === 1.62, "Table 13.3: 2P24h = 150, d=5 is 1.62");
+    assert(T13_3.factors[180][0] === 1.40, "Table 13.3: 2P24h > 180, d=5 is 1.40");
+    assert(T13_3.factors[120][4] === 0.00, "Table 13.3: d=30 is 0.00 for 120");
+
+    // ─────────────────────────────────────────────────────────────
+    // 3. VERIFICATION OF CALCULATIONS
+    // ─────────────────────────────────────────────────────────────
+    log("\n--- 3. VERIFYING HYDROLOGICAL CALCULATIONS ---");
+
+    // A. Gumbel KT variates
+    log("Checking Gumbel KT variate...");
+    const ktExpected = {
+      2: 0.3665,
+      5: 1.4999,
+      10: 2.2504,
+      20: 2.9702,
+      50: 3.9019,
+      100: 4.6001
+    };
+    Object.entries(ktExpected).forEach(([ari, expected]) => {
+      const actual = IDFCalculator.gumbelK(Number(ari));
+      const diff = Math.abs(actual - expected);
+      assert(diff < 0.001, `Gumbel KT for ARI=${ari}`, `actual: ${actual.toFixed(4)}, expected: ${expected}`);
+    });
+
+    // B. Short duration interpolation & continuity
+    log("Checking Short Duration Eq. 13.3 & continuity at d = 30 min...");
+    const testStation = HIGH_ARI_STATIONS[0]; // Stor JPS Johor Bahru
+    const i30_base = IDFCalculator.calculateHighARIBase(testStation, 30, 10);
+    const i30_calc = IDFCalculator.calculate(testStation, 30, "highari", 10, 120);
+    const diff30 = Math.abs(i30_base - i30_calc);
+    assert(diff30 < 0.001, `Continuity at d=30 min for High ARI`, `base: ${i30_base}, calc: ${i30_calc}`);
+
+    // Check F_D interpolation at d = 7.5 (midway between 5 and 10 min for 2P24h = 120)
+    // d=5 is 1.85, d=10 is 1.13 -> midpoint = 1.49
+    const fdMid = IDFCalculator.getFd(7.5, 120);
+    assert(Math.abs(fdMid - 1.49) < 0.01, `F_D interpolation at d=7.5 min`, `actual: ${fdMid.toFixed(3)}, expected: 1.490`);
+
+    // Check short duration intensities: I(5) > I(10) > I(15) > I(30) > I(60)
+    const i5 = IDFCalculator.calculate(testStation, 5, "highari", 10, 120);
+    const i10 = IDFCalculator.calculate(testStation, 10, "highari", 10, 120);
+    const i15 = IDFCalculator.calculate(testStation, 15, "highari", 10, 120);
+    const i30 = IDFCalculator.calculate(testStation, 30, "highari", 10, 120);
+    const i60 = IDFCalculator.calculate(testStation, 60, "highari", 10, 120);
+
+    assert(i5 > i10, `Monotonicity: I(5) > I(10)`, `I(5)=${i5.toFixed(2)}, I(10)=${i10.toFixed(2)}`);
+    assert(i10 > i15, `Monotonicity: I(10) > I(15)`, `I(10)=${i10.toFixed(2)}, I(15)=${i15.toFixed(2)}`);
+    assert(i15 > i30, `Monotonicity: I(15) > I(30)`, `I(15)=${i15.toFixed(2)}, I(30)=${i30.toFixed(2)}`);
+    assert(i30 > i60, `Monotonicity: I(30) > I(60)`, `I(30)=${i30.toFixed(2)}, I(60)=${i60.toFixed(2)}`);
+
+    // Check rainfall depths: P(5) < P(10) < P(15) < P(30) < P(60)
+    const p5 = (i5 * 5) / 60;
+    const p10 = (i10 * 10) / 60;
+    const p15 = (i15 * 15) / 60;
+    const p30 = (i30 * 30) / 60;
+    const p60 = (i60 * 60) / 60;
+
+    assert(p5 < p10, `Depth monotonicity: P(5) < P(10)`, `P(5)=${p5.toFixed(2)}, P(10)=${p10.toFixed(2)}`);
+    assert(p10 < p15, `Depth monotonicity: P(10) < P(15)`, `P(10)=${p10.toFixed(2)}, P(15)=${p15.toFixed(2)}`);
+    assert(p15 < p30, `Depth monotonicity: P(15) < P(30)`, `P(15)=${p15.toFixed(2)}, P(30)=${p30.toFixed(2)}`);
+    assert(p30 < p60, `Depth monotonicity: P(30) < P(60)`, `P(30)=${p30.toFixed(2)}, P(60)=${p60.toFixed(2)}`);
+
+    // C. Rational Method Formula Check
+    log("Checking Rational Method Q = CIA / 360...");
+    // If C = 1.0, I = 360 mm/hr, A = 1.0 ha -> Q = 1.000 m3/s
+    const qTest1 = IDFCalculator.calculateRational(1.0, 360, 1.0);
+    assert(qTest1.Q_m3s === 1.0, `Rational Method baseline: Q(1.0, 360, 1.0) = 1.0 m3/s`, `actual: ${qTest1.Q_m3s}`);
+    assert(qTest1.Q_Ls === 1000.0, `Rational Method baseline: Q_Ls = 1000 L/s`, `actual: ${qTest1.Q_Ls}`);
+    assert(!qTest1.isOver80ha, `Rational Method: A=1 ha is not over 80 ha`);
+
+    // If A = 100 ha -> isOver80ha should be true
+    const qTest2 = IDFCalculator.calculateRational(0.75, 120, 100);
+    assert(qTest2.isOver80ha === true, `Rational Method: A=100 ha flags isOver80ha`);
+    assert(qTest2.Q_m3s === 25.0, `Rational Method: Q(0.75, 120, 100) = 25.0 m3/s`, `actual: ${qTest2.Q_m3s}`);
+
+    // D. Climate Change Factor Check
+    log("Checking Climate Change Factor...");
+    const iBase = 100;
+    const iCcf15 = IDFCalculator.applyCCF(iBase, 15);
+    assert(Math.abs(iCcf15 - 115) < 0.001, `CCF +15% on 100 mm/hr = 115 mm/hr`, `actual: ${iCcf15}`);
+
+    // E. Comprehensive Station Stress-Test: All stations x All ARIs x 5 durations
+    log("\nStress-testing all stations across ARIs and durations...");
+    const testDurations = [5, 15, 30, 60, 120, 360];
+
+    // High ARI Stations
+    let highFailCount = 0;
+    HIGH_ARI_STATIONS.forEach(s => {
+      [2, 10, 100].forEach(ari => {
+        testDurations.forEach(d => {
+          const val = IDFCalculator.calculate(s, d, "highari", ari, 120);
+          if (val === null || isNaN(val) || val <= 0 || !isFinite(val)) {
+            highFailCount++;
+            warn(`High ARI Station ${s.id} invalid at d=${d}, ari=${ari}: ${val}`);
+          }
+        });
+      });
+    });
+    assert(highFailCount === 0, `All High ARI stations produce valid positive intensities (${HIGH_ARI_STATIONS.length} stations)`);
+
+    // Low ARI Stations
+    let lowFailCount = 0;
+    LOW_ARI_STATIONS.forEach(s => {
+      [2, 10, 100].forEach(ari => {
+        testDurations.forEach(d => {
+          const val = IDFCalculator.calculate(s, d, "lowari", ari, 120);
+          if (val === null || isNaN(val) || val <= 0 || !isFinite(val)) {
+            lowFailCount++;
+            warn(`Low ARI Station ${s.id} invalid at d=${d}, ari=${ari}: ${val}`);
+          }
+        });
+      });
+    });
+    assert(lowFailCount === 0, `All Low ARI stations produce valid positive intensities (${LOW_ARI_STATIONS.length} stations)`);
+
+    // Standard Polynomial Stations
+    let stdFailCount = 0;
+    STATIONS.forEach(s => {
+      [2, 10, 100].forEach(ari => {
+        testDurations.forEach(d => {
+          const val = IDFCalculator.calculate(s, d, "standard", ari, 120);
+          if (val === null || isNaN(val) || val <= 0 || !isFinite(val)) {
+            stdFailCount++;
+            warn(`Standard Station ${s.id} invalid at d=${d}, ari=${ari}: ${val}`);
+          }
+        });
+      });
+    });
+    assert(stdFailCount === 0, `All Standard stations produce valid positive intensities (${STATIONS.length} stations)`);
+
+    // Summary
+    log("\n==========================================");
+    log(`VERIFICATION COMPLETE`);
+    log(`Passed: ${report.passed}`);
+    log(`Failed: ${report.failed}`);
+    log(`Warnings: ${report.warnings}`);
+    log("==========================================");
+
+    if (report.failed > 0) {
+      log("\nFailure Details:");
+      report.details.forEach(d => log(d));
+    }
+  </script>
+</body>
+</html>

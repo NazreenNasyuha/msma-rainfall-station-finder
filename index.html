@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>MSMA Rainfall Station Finder | IDF Calculator</title>
+  <title>MSMA Rainfall Station Finder &amp; Hydrological Calculator | JPS Malaysia</title>
 
   <!-- Leaflet.js -->
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
@@ -22,8 +22,8 @@
     <!-- HEADER                                             -->
     <!-- ═══════════════════════════════════════════════════ -->
     <header>
-      <h1>🌧️ MSMA Rainfall Station Finder</h1>
-      <p>MSMA 2nd Edition &amp; SUStoM — Find nearest stations, view IDF curves &amp; calculate rainfall intensity</p>
+      <h1>🌧️ MSMA Rainfall Station Finder &amp; Hydrological Calculator</h1>
+      <p>MSMA 2nd Edition (DID/JPS 2012) &amp; SUStoM — Find Nearest Stations, IDF Curves (5–1000 min), Rational Method Peak Flow &amp; Climate Change Allowance</p>
     </header>
 
     <!-- ═══════════════════════════════════════════════════ -->
@@ -41,7 +41,7 @@
           <option value="lowari">Low ARI — λ, κ, θ, η — Extended Stations (150+)</option>
           <option value="standard">Standard MSMA — Polynomial (a, b, c, d) — Urban Centres</option>
         </select>
-        <span style="color:#888;font-size:.85rem" id="modeHint">150+ stations, Lambda/Kappa/Theta/Eta coefficients (High ARI)</span>
+        <span style="color:#555;font-size:.85rem" id="modeHint">150+ stations, Lambda/Kappa/Theta/Eta coefficients (High ARI)</span>
       </div>
     </div>
 
@@ -52,9 +52,26 @@
 
       <!-- Left: Input Panel -->
       <div class="card">
-        <h2 class="card-title">📍 Project Site Coordinates</h2>
+        <h2 class="card-title">📍 Project Site Coordinates &amp; Search</h2>
 
-        <div class="input-grid">
+        <!-- Location Search Bar -->
+        <div class="search-wrapper">
+          <label for="siteSearch" style="font-weight:600;font-size:0.9rem;color:#1a5276;display:block;margin-bottom:4px">
+            🔎 Search City, Town, or Rainfall Station
+          </label>
+          <div style="position:relative">
+            <input
+              type="text"
+              id="siteSearch"
+              class="search-input"
+              placeholder="e.g. Subang Jaya, Putrajaya, Kuantan, Stor JPS, 1437116..."
+              autocomplete="off"
+            />
+            <div id="searchResults" class="search-dropdown"></div>
+          </div>
+        </div>
+
+        <div class="input-grid" style="margin-top:14px">
           <div class="input-group">
             <label for="lat">Latitude (°N)</label>
             <input type="number" id="lat" placeholder="e.g., 3.1390" step="0.0001">
@@ -65,14 +82,17 @@
           </div>
         </div>
 
-        <div class="input-group" style="margin-bottom:12px">
-          <label>Quick Locations</label>
-          <div class="quick-locations" id="quickLocations"></div>
+        <p class="map-hint-text">💡 <em>Tip: You can also click anywhere on the map to set project coordinates instantly.</em></p>
+
+        <div class="btn-group" style="margin-top:12px">
+          <button class="btn btn-primary" id="btnFind">🔍 Find Nearest</button>
+          <button class="btn btn-accent" id="btnLocate" title="Locate via GPS">📍 My Location</button>
+          <button class="btn btn-secondary" id="btnClear">🗑️ Clear</button>
         </div>
 
-        <div class="btn-group">
-          <button class="btn btn-primary" id="btnFind">🔍 Find Nearest</button>
-          <button class="btn btn-secondary" id="btnClear">🗑️ Clear</button>
+        <div class="input-group" style="margin-top:16px;margin-bottom:0">
+          <label style="font-weight:600;color:#1a5276">Quick Locations</label>
+          <div class="quick-locations" id="quickLocations"></div>
         </div>
       </div>
 
@@ -98,10 +118,10 @@
             <div class="legend-dot" style="background:#f39c12"></div> Sarawak
           </div>
           <div class="legend-item">
-            <div class="legend-dot" style="background:#e74c3c"></div> Your Site
+            <div class="legend-dot" style="background:#e74c3c;border:2px solid #fff"></div> Site Pin
           </div>
           <div class="legend-item">
-            <div class="legend-dot" style="background:#27ae60"></div> Nearest Line
+            <div class="legend-dot" style="background:#27ae60"></div> Nearest Distance
           </div>
         </div>
 
@@ -114,29 +134,42 @@
     <!-- ═══════════════════════════════════════════════════ -->
     <div class="results" id="results">
 
+      <!-- Action Toolbar -->
+      <div class="action-toolbar">
+        <span style="font-weight:600;color:#1a5276;font-size:0.95rem">⚡ Engineering Submission Tools:</span>
+        <div style="display:flex;gap:8px;flex-wrap:wrap">
+          <button class="btn btn-sm btn-outline" id="btnCopySheet">📋 Copy Calculation Sheet</button>
+          <button class="btn btn-sm btn-outline" id="btnExportCSV">📥 Export IDF (CSV)</button>
+          <button class="btn btn-sm btn-outline" id="btnPrintReport">🖨️ Print / Save PDF</button>
+        </div>
+      </div>
+
       <!-- Nearest Stations -->
       <div class="card" style="margin-top:20px">
-        <h2 class="card-title">📊 Top 3 Nearest Stations</h2>
+        <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;margin-bottom:12px">
+          <h2 class="card-title" style="margin-bottom:0">📊 Top 3 Nearest Rainfall Stations</h2>
+          <span style="color:#666;font-size:0.85rem">Click any station card to select it for IDF calculations</span>
+        </div>
         <div id="stationResults"></div>
       </div>
 
       <!-- IDF Coefficients -->
       <div class="card idf-section">
-        <h2 class="card-title">📈 IDF Coefficients — Nearest Station</h2>
+        <h2 class="card-title">📈 IDF Coefficients &amp; Equations</h2>
 
         <div class="idf-equation">
-          <p style="color:#888;font-size:.85rem;margin-bottom:6px" id="eqLabel">High ARI IDF Equation (Appendix 13.A)</p>
+          <p style="color:#555;font-weight:600;font-size:.88rem;margin-bottom:6px" id="eqLabel">High ARI IDF Equation (Appendix 13.A)</p>
           <div class="equation" id="eqFormula">I<sub>T</sub>(t) = λ × t<sup>−κ</sup> × [1 + θ × K<sub>T</sub>]<sup>η</sup></div>
-          <p style="color:#888;font-size:.8rem;margin-top:6px" id="eqDesc">λ, κ, θ, η = Station coefficients | K<sub>T</sub> = Gumbel frequency factor | t = Duration (min), valid 30–1000 min</p>
+          <p style="color:#666;font-size:.82rem;margin-top:6px" id="eqDesc">λ, κ, θ, η = Station coefficients | K<sub>T</sub> = −ln(−ln(1 − 1/T)) | Short duration (&lt; 30 min) per MSMA Eq. 13.3</p>
         </div>
 
-        <h3 style="color:#1a5276;font-size:1rem;margin-bottom:10px" id="coeffTitle">Select a station to view coefficients</h3>
+        <h3 style="color:#1a5276;font-size:1.05rem;margin-bottom:10px" id="coeffTitle">Select a station to view coefficients</h3>
         <div class="coeff-grid" id="coeffGrid"></div>
 
         <div style="overflow-x:auto">
           <table class="idf-table">
             <thead id="idfTableHead">
-              <tr><th>ARI (yr)</th><th>λ</th><th>κ</th><th>θ</th><th>η</th></tr>
+              <tr><th>ARI (yr)</th><th>λ (Lambda)</th><th>κ (Kappa)</th><th>θ (Theta)</th><th>η (Eta)</th></tr>
             </thead>
             <tbody id="idfBody"></tbody>
           </table>
@@ -145,61 +178,186 @@
 
       <!-- IDF Curve Chart -->
       <div class="card" style="margin-top:20px">
-        <h2 class="card-title">📉 IDF Curves</h2>
+        <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;margin-bottom:12px">
+          <h2 class="card-title" style="margin-bottom:0">📉 Intensity-Duration-Frequency (IDF) Curves</h2>
+          <span class="msma-tag">MSMA 2nd Ed. Log-Log Plot (5 to 1000 min)</span>
+        </div>
         <div class="chart-container">
           <canvas id="idfChart"></canvas>
         </div>
       </div>
 
-      <!-- IDF Calculator -->
+      <!-- Combined Hydrological Calculator: IDF + Rational Method -->
       <div class="card" style="margin-top:20px">
-        <h2 class="card-title">🧮 IDF Rainfall Intensity Calculator</h2>
-        <p style="color:#888;font-size:.85rem;margin-bottom:12px">
-          Calculate rainfall intensity (mm/hr) for a given duration and ARI.
+        <h2 class="card-title">🧮 Stormwater Hydrology Calculator (MSMA Chapters 13 &amp; 14)</h2>
+        <p style="color:#666;font-size:.88rem;margin-bottom:16px">
+          Computes design rainfall intensity <b>I (mm/hr)</b> and Rational Method peak discharge <b>Q (m³/s)</b> per MSMA 2nd Edition.
         </p>
 
-        <div class="input-grid">
+        <!-- Calculator Input Grid -->
+        <div class="input-grid" style="grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));gap:16px">
+          
+          <!-- Storm Duration -->
           <div class="input-group">
-            <label for="calcDur">Duration (minutes)</label>
-            <input type="number" id="calcDur" placeholder="e.g., 60" min="30" max="1000" step="1">
-            <p class="hint">Valid range: 30 – 1000 minutes</p>
+            <label for="calcDur">Storm Duration, t (minutes)</label>
+            <input type="number" id="calcDur" value="60" min="5" max="1000" step="1">
+            <p class="hint">Range: 5 – 1000 min (time of concentration t<sub>c</sub>)</p>
           </div>
+
+          <!-- Return Period ARI -->
           <div class="input-group">
             <label for="calcARI" id="calcARILabel">Average Recurrence Interval (ARI)</label>
             <select id="calcARI">
-              <option value="2">2 years</option>
-              <option value="5">5 years</option>
-              <option value="10" selected>10 years</option>
-              <option value="20">20 years</option>
-              <option value="50">50 years</option>
-              <option value="100">100 years</option>
+              <option value="2">2 years (Minor drainage / roads)</option>
+              <option value="5">5 years (Residential drains)</option>
+              <option value="10" selected>10 years (Standard urban drainage)</option>
+              <option value="20">20 years (Commercial / Trunk drains)</option>
+              <option value="50">50 years (Major culverts / Detention)</option>
+              <option value="100">100 years (Regional flood protection)</option>
             </select>
+            <p class="hint">MSMA design return period</p>
+          </div>
+
+          <!-- Climate Change Factor -->
+          <div class="input-group">
+            <label for="calcCCF">Climate Change Factor (CCF)</label>
+            <select id="calcCCF">
+              <option value="0" selected>0% — Baseline Historical</option>
+              <option value="5">+5% — Minimal allowance</option>
+              <option value="10">+10% — DID Planning standard</option>
+              <option value="15">+15% — Standard DID 2040 horizon</option>
+              <option value="20">+20% — High risk / critical assets</option>
+              <option value="25">+25% — Extreme resilience</option>
+              <option value="30">+30% — Long term 2100 horizon</option>
+            </select>
+            <p class="hint">DID Technical Guideline allowance</p>
+          </div>
+
+          <!-- Short Duration 2P24h -->
+          <div class="input-group" id="p24Group" style="display:none">
+            <label for="calcP24">2-yr 24-hr Rainfall Depth (²P₂₄ₕ)</label>
+            <select id="calcP24">
+              <option value="100">&lt; 100 mm</option>
+              <option value="120" selected>120 mm (West Coast default)</option>
+              <option value="150">150 mm (East Coast / Sabah / Sarawak)</option>
+              <option value="180">&gt; 180 mm</option>
+            </select>
+            <p class="hint">MSMA Table 13.3 parameter for t &lt; 30 min</p>
+          </div>
+
+          <!-- Catchment Area -->
+          <div class="input-group">
+            <label for="catchmentArea">Catchment Area (A)</label>
+            <div style="display:flex;gap:6px">
+              <input type="number" id="catchmentArea" value="5" step="0.01" min="0" placeholder="e.g. 5">
+              <select id="areaUnit" style="width:90px;padding:8px">
+                <option value="ha" selected>ha</option>
+                <option value="m2">m²</option>
+              </select>
+            </div>
+            <p class="hint">Rational Method valid for A ≤ 80 ha</p>
+          </div>
+
+          <!-- Runoff Coefficient Preset -->
+          <div class="input-group">
+            <label for="runoffCPreset">Runoff Coefficient (C) Preset</label>
+            <select id="runoffCPreset">
+              <option value="0.90">Commercial / CBD (C = 0.90)</option>
+              <option value="0.85">Industrial (C = 0.85)</option>
+              <option value="0.80">Residential - High Density / Flats (C = 0.80)</option>
+              <option value="0.70" selected>Residential - Medium Density / Terrace (C = 0.70)</option>
+              <option value="0.60">Residential - Low Density / Bungalow (C = 0.60)</option>
+              <option value="0.95">Paved Roads / Concrete / Roofs (C = 0.95)</option>
+              <option value="0.35">Parks / Playgrounds / Grass (C = 0.35)</option>
+              <option value="0.25">Agriculture / Forest (C = 0.25)</option>
+              <option value="custom">Custom C value...</option>
+            </select>
+            <p class="hint">MSMA 2nd Ed. Table 14.3 / 14.4</p>
+          </div>
+
+          <!-- Runoff Coefficient Value -->
+          <div class="input-group">
+            <label for="runoffC">Runoff Coefficient Value (C)</label>
+            <input type="number" id="runoffC" value="0.70" min="0.05" max="1.0" step="0.01">
+            <p class="hint">Composite or weighted C (0.05 – 1.0)</p>
           </div>
         </div>
 
-        <button class="btn btn-success" id="btnCalc">⚡ Calculate Intensity</button>
-
-        <div class="calc-result" id="calcResult">
-          <p>Rainfall Intensity</p>
-          <h3 id="calcIntensity">— mm/hr</h3>
-          <p id="calcDetail"></p>
+        <!-- Short duration notice -->
+        <div id="shortDurationBadge" class="short-duration-badge" style="display:none">
+          ⚡ <b>MSMA Eq. 13.3 &amp; Table 13.3 Applied:</b> For storm durations under 30 minutes, design rainfall depth P<sub>d</sub> is adjusted using short-duration factors (F<sub>D</sub>).
         </div>
 
-        <div class="formula-note" id="formulaNote">
-          <strong>📝 Note:</strong> The High ARI formula uses Lambda (λ), Kappa (κ), Theta (θ), and Eta (η) coefficients. Valid for 30 ≤ t ≤ 1000 min. K<sub>T</sub> = −ln(−ln(1 − 1/T)) from Gumbel distribution.
+        <button class="btn btn-success" id="btnCalc" style="margin-top:16px">⚡ Calculate Intensity &amp; Peak Flow</button>
+
+        <!-- Calculation Result Cards -->
+        <div class="calc-result" id="calcResult">
+          <div class="results-cards-grid">
+            
+            <!-- Intensity Card -->
+            <div class="result-box intensity-box">
+              <div class="result-box-title">🌧️ Design Rainfall Intensity (I)</div>
+              <h3 id="calcIntensity">— mm/hr</h3>
+              <p id="calcDetail" class="result-box-sub"></p>
+            </div>
+
+            <!-- Rational Method Peak Flow Card -->
+            <div class="result-box rational-box">
+              <div class="result-box-title">🌊 Rational Method Peak Runoff (Q)</div>
+              <div id="rationalResults">
+                <div class="empty-rational-hint">Enter catchment area above to compute Peak Discharge Q.</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="formula-note" id="formulaNote" style="margin-top:16px">
+          <strong>📝 MSMA Standard:</strong> The High ARI formula uses Lambda (λ), Kappa (κ), Theta (θ), and Eta (η) coefficients from Table 13.A1. Valid for 30 ≤ t ≤ 1000 min. For t &lt; 30 min (5 to 30 min), short duration rainfall depth is adjusted using Eq. 13.3: P<sub>d</sub> = P<sub>30</sub> − F<sub>D</sub>(P<sub>60</sub> − P<sub>30</sub>).
         </div>
       </div>
+
+      <!-- Multi-ARI Summary Table -->
+      <div class="card" style="margin-top:20px">
+        <h2 class="card-title">📋 Multi-ARI Intensity &amp; Peak Discharge Summary</h2>
+        <p style="color:#666;font-size:.85rem;margin-bottom:12px">
+          Summary across all MSMA return periods for the specified storm duration and catchment parameters.
+        </p>
+        <div style="overflow-x:auto">
+          <table class="idf-table summary-table">
+            <thead>
+              <tr>
+                <th>Return Period (ARI)</th>
+                <th>Baseline Intensity, I (mm/hr)</th>
+                <th id="thCCFIntensity" style="display:none">CCF Intensity (mm/hr)</th>
+                <th>Rainfall Depth, P (mm)</th>
+                <th>Peak Runoff, Q (m³/s)</th>
+              </tr>
+            </thead>
+            <tbody id="multiARIBody"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Step-by-Step Calculation Breakdown for Engineering Report -->
+      <div class="card" style="margin-top:20px">
+        <h2 class="card-title">📝 Step-by-Step Engineering Submission Breakdown</h2>
+        <p style="color:#666;font-size:.85rem;margin-bottom:12px">
+          Full mathematical steps ready for inclusion in Drainage Impact Assessments (DIA) or JPS submission reports.
+        </p>
+        <div id="calcBreakdownContent" class="breakdown-container"></div>
+      </div>
+
     </div>
 
     <!-- ═══════════════════════════════════════════════════ -->
     <!-- FOOTER                                             -->
     <!-- ═══════════════════════════════════════════════════ -->
     <footer>
-      <p><strong>MSMA Rainfall Station Finder</strong></p>
-      <p>Data: MSMA 2nd Edition (DID, 2012) &amp; SUStoM (DID, 2018)</p>
-      <p style="margin-top:4px;font-size:.8rem;color:#aaa">IDF Modes: High ARI | Low ARI | Standard (polynomial)</p>
-      <p style="margin-top:4px;font-size:.8rem;color:#aaa">For preliminary reference only. Verify with official DID publications for design use.</p>
-      <p style="font-size:.78rem;color:#bbb;margin-top:4px">© 2024 MIT License</p>
+      <p><strong>MSMA Rainfall Station Finder &amp; Hydrological Engineering Toolkit</strong></p>
+      <p>Technical Reference: Manual Saliran Mesra Alam Malaysia (MSMA 2nd Edition, 2012) · JPS Hydrological Procedure No. 1 (HP1) · SUStoM (2018)</p>
+      <p style="margin-top:4px;font-size:.82rem;color:#777">Formulas: Standard Polynomial (Eq. 13.2) | High ARI / Low ARI (Appendix 13.A) | Short Duration (Eq. 13.3 &amp; Table 13.3) | Rational Method (Eq. 14.1)</p>
+      <p style="margin-top:4px;font-size:.8rem;color:#888">Verified for preliminary hydrological and stormwater design. Confirm with official JPS publications for formal regulatory submissions.</p>
+      <p style="font-size:.78rem;color:#aaa;margin-top:6px">© 2024–2026 MIT License · Malaysian Urban Stormwater Engineering</p>
     </footer>
   </div>
 

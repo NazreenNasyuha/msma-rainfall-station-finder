@@ -1,13 +1,15 @@
 /**
  * Map Module
- * Handles Leaflet.js map initialization, markers, lines, and interactions.
+ * Handles Leaflet.js map initialization, markers, lines, clicks, and interactions.
  */
 
 const MapModule = (() => {
   let map = null;
   let stationMarkers = [];
+  let stationMarkersMap = {};
   let userMarker = null;
   let connectionLines = [];
+  let onMapClickCallback = null;
 
   /** Region color mapping */
   const REGION_COLORS = {
@@ -36,7 +38,22 @@ const MapModule = (() => {
       maxZoom: 18,
     }).addTo(map);
 
+    // Map click handler to pick project site coordinates
+    map.on("click", (e) => {
+      if (typeof onMapClickCallback === "function") {
+        onMapClickCallback(e.latlng.lat, e.latlng.lng);
+      }
+    });
+
     return map;
+  };
+
+  /**
+   * Set callback for map click
+   * @param {Function} callback - fn(lat, lon)
+   */
+  const setOnMapClick = (callback) => {
+    onMapClickCallback = callback;
   };
 
   /**
@@ -45,6 +62,7 @@ const MapModule = (() => {
    */
   const renderStations = (stations) => {
     clearStations();
+    stationMarkersMap = {};
 
     stations.forEach((s) => {
       const color = REGION_COLORS[s.region] || "#2980b9";
@@ -57,14 +75,22 @@ const MapModule = (() => {
       })
         .addTo(map)
         .bindPopup(
-          `<div style="font-family:Segoe UI,sans-serif;min-width:150px">
+          `<div style="font-family:Segoe UI,sans-serif;min-width:180px">
             <b style="color:#1a5276">${s.id}: ${s.name}</b><br>
-            <span style="color:#888">${s.state}</span><br>
-            <small>Lat: ${s.lat.toFixed(4)}, Lon: ${s.lon.toFixed(4)}</small>
+            <span style="color:#666">${s.state} · ${s.region}</span><br>
+            <small style="color:#888">Lat: ${s.lat.toFixed(4)}, Lon: ${s.lon.toFixed(4)}</small>
+            <div style="margin-top:8px">
+              <button onclick="App.selectStationById('${s.id}')" style="
+                background:#2980b9;color:#fff;border:none;padding:5px 10px;
+                border-radius:5px;cursor:pointer;font-size:0.8rem;font-weight:600;width:100%;
+                display:block;text-align:center;transition:background 0.2s;
+              ">📊 Select This Station</button>
+            </div>
           </div>`
         );
 
       stationMarkers.push(marker);
+      stationMarkersMap[s.id] = marker;
     });
   };
 
@@ -74,6 +100,7 @@ const MapModule = (() => {
   const clearStations = () => {
     stationMarkers.forEach((m) => map.removeLayer(m));
     stationMarkers = [];
+    stationMarkersMap = {};
   };
 
   /**
@@ -87,20 +114,20 @@ const MapModule = (() => {
     const icon = L.divIcon({
       className: "",
       html: `<div style="
-        background:#e74c3c;width:18px;height:18px;border-radius:50%;
-        border:3px solid #fff;box-shadow:0 2px 8px rgba(0,0,0,.5);
-        position:relative;z-index:1000
+        background:#e74c3c;width:20px;height:20px;border-radius:50%;
+        border:3px solid #fff;box-shadow:0 2px 10px rgba(0,0,0,.5);
+        position:relative;z-index:1000;animation:pulseSite 2s infinite;
       "></div>`,
-      iconSize: [18, 18],
-      iconAnchor: [9, 9],
+      iconSize: [20, 20],
+      iconAnchor: [10, 10],
     });
 
     userMarker = L.marker([lat, lon], { icon })
       .addTo(map)
       .bindPopup(
         `<div style="font-family:Segoe UI,sans-serif">
-          <b style="color:#e74c3c">📍 Your Project Site</b><br>
-          <small>Lat: ${lat.toFixed(4)}, Lon: ${lon.toFixed(4)}</small>
+          <b style="color:#e74c3c">📍 Project Site</b><br>
+          <small>Lat: ${lat.toFixed(4)}°N, Lon: ${lon.toFixed(4)}°E</small>
         </div>`
       );
 
@@ -124,7 +151,7 @@ const MapModule = (() => {
         ],
         {
           color: LINE_COLORS[i] || "#999",
-          weight: i === 0 ? 3 : 2,
+          weight: i === 0 ? 3.5 : 2,
           dashArray: i === 0 ? "" : "8 6",
           opacity: 0.85,
         }
@@ -132,13 +159,24 @@ const MapModule = (() => {
         .addTo(map)
         .bindPopup(
           `<div style="font-family:Segoe UI,sans-serif">
-            <b>${i === 0 ? "🟢" : "🟠"} To ${s.name}</b><br>
+            <b>${i === 0 ? "🥇 Nearest Station:" : i === 1 ? "🥈 2nd Nearest:" : "🥉 3rd Nearest:"} ${s.name}</b><br>
             Distance: <b>${s.dist.toFixed(2)} km</b>
           </div>`
         );
 
       connectionLines.push(line);
     });
+  };
+
+  /**
+   * Highlight a specific station marker on the map
+   * @param {string} stationId - ID of station to highlight
+   */
+  const highlightStation = (stationId) => {
+    const marker = stationMarkersMap[stationId];
+    if (marker) {
+      marker.openPopup();
+    }
   };
 
   /**
@@ -203,6 +241,7 @@ const MapModule = (() => {
 
   return {
     init,
+    setOnMapClick,
     renderStations,
     clearStations,
     setUserMarker,
@@ -212,6 +251,7 @@ const MapModule = (() => {
     clearAll,
     filterByRegion,
     fitToResults,
+    highlightStation,
     REGION_COLORS,
     LINE_COLORS,
   };

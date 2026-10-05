@@ -1,6 +1,6 @@
-/* ═══════════════════════════════════════════════════════════
-   MSMA Rainfall Station Finder — Stylesheet
-   ═══════════════════════════════════════════════════════════ */
+/* ═══════════════════════════════════════════════════
+   MSMA Rainfall Station Finder & Hydrological Toolkit — Stylesheet
+   ═══════════════════════════════════════════════════ */
 
 /* --- Reset & Base --- */
 *,
@@ -65,20 +65,23 @@ header {
   background: linear-gradient(135deg, var(--primary) 0%, var(--primary-light) 100%);
   color: #fff;
   border-radius: var(--radius);
-  padding: 28px 30px;
+  padding: 26px 28px;
   margin-bottom: 20px;
   text-align: center;
+  box-shadow: var(--shadow);
 }
 
 header h1 {
-  font-size: 2rem;
+  font-size: 1.95rem;
   font-weight: 700;
   margin-bottom: 6px;
 }
 
 header p {
-  opacity: 0.9;
-  font-size: 1rem;
+  opacity: 0.95;
+  font-size: 0.95rem;
+  max-width: 900px;
+  margin: 0 auto;
 }
 
 /* --- Card --- */
@@ -98,51 +101,123 @@ header p {
   border-bottom: 2px solid var(--accent);
   display: flex;
   align-items: center;
-  gap: 8px;
 }
 
-/* --- Form Inputs --- */
+/* --- Search Bar & Autocomplete --- */
+.search-wrapper {
+  position: relative;
+  margin-bottom: 10px;
+}
+
+.search-input {
+  width: 100%;
+  padding: 10px 14px;
+  border: 2px solid var(--border);
+  border-radius: 8px;
+  font-size: 0.95rem;
+  font-family: inherit;
+  transition: all var(--transition);
+}
+
+.search-input:focus {
+  border-color: var(--accent);
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.15);
+}
+
+.search-dropdown {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  right: 0;
+  background: #fff;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  max-height: 260px;
+  overflow-y: auto;
+  z-index: 1200;
+  box-shadow: var(--shadow-lg);
+  display: none;
+}
+
+.search-item {
+  padding: 10px 14px;
+  border-bottom: 1px solid #f2f4f6;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.search-item:last-child {
+  border-bottom: none;
+}
+
+.search-item:hover {
+  background: #eef6fc;
+}
+
+.search-item.muted {
+  color: #888;
+  font-size: 0.85rem;
+  cursor: default;
+}
+
+.search-item-title {
+  font-weight: 600;
+  color: var(--primary);
+  font-size: 0.92rem;
+}
+
+.search-item-sub {
+  font-size: 0.78rem;
+  color: var(--text-muted);
+  margin-top: 2px;
+}
+
+.map-hint-text {
+  font-size: 0.82rem;
+  color: #666;
+  margin-top: 6px;
+}
+
+/* --- Form Controls --- */
 .input-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 14px;
-  margin-bottom: 14px;
+  gap: 12px;
 }
 
-@media (max-width: 500px) {
-  .input-grid {
-    grid-template-columns: 1fr;
-  }
+.input-group {
+  margin-bottom: 8px;
 }
 
 .input-group label {
   display: block;
-  margin-bottom: 5px;
+  font-size: 0.85rem;
   font-weight: 600;
-  font-size: 0.88rem;
   color: var(--text);
+  margin-bottom: 5px;
 }
 
 .input-group input,
 .input-group select {
   width: 100%;
-  padding: 10px 14px;
+  padding: 9px 12px;
   border: 2px solid var(--border);
-  border-radius: 10px;
+  border-radius: 8px;
   font-size: 0.95rem;
   font-family: inherit;
-  transition: border-color var(--transition), box-shadow var(--transition);
+  transition: border-color var(--transition);
   background: #fff;
 }
 
 .input-group input:focus,
 .input-group select:focus {
-  outline: none;
   border-color: var(--accent);
+  outline: none;
   box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.15);
 }
 
-.hint {
+.input-group .hint {
   font-size: 0.75rem;
   color: var(--text-muted);
   margin-top: 3px;
@@ -150,51 +225,78 @@ header p {
 
 /* --- Buttons --- */
 .btn {
-  padding: 11px 24px;
+  padding: 10px 20px;
   border: none;
-  border-radius: 10px;
+  border-radius: 8px;
   font-size: 0.95rem;
   font-weight: 600;
-  font-family: inherit;
   cursor: pointer;
   transition: all var(--transition);
   display: inline-flex;
   align-items: center;
-  gap: 7px;
+  justify-content: center;
+  gap: 6px;
+  font-family: inherit;
 }
 
 .btn:active {
-  transform: scale(0.97);
+  transform: scale(0.98);
 }
 
 .btn-primary {
-  background: linear-gradient(135deg, var(--primary-light), var(--primary));
+  background: var(--primary-light);
   color: #fff;
 }
 
 .btn-primary:hover {
-  box-shadow: 0 4px 14px rgba(41, 128, 185, 0.35);
-  transform: translateY(-1px);
+  background: var(--primary);
 }
 
 .btn-secondary {
-  background: #e8f4fc;
-  color: var(--primary);
-  border: 2px solid var(--primary-light);
+  background: #e2e8f0;
+  color: #475569;
 }
 
 .btn-secondary:hover {
-  background: var(--primary-light);
+  background: #cbd5e1;
+}
+
+.btn-accent {
+  background: #e67e22;
   color: #fff;
+}
+
+.btn-accent:hover {
+  background: #d35400;
 }
 
 .btn-success {
   background: var(--success);
   color: #fff;
+  width: 100%;
+  padding: 12px;
+  font-size: 1.05rem;
 }
 
 .btn-success:hover {
-  background: #219a52;
+  background: #219653;
+}
+
+.btn-sm {
+  padding: 6px 12px;
+  font-size: 0.82rem;
+}
+
+.btn-outline {
+  background: #fff;
+  border: 1.5px solid var(--primary-light);
+  color: var(--primary-light);
+  font-weight: 600;
+}
+
+.btn-outline:hover {
+  background: var(--primary-light);
+  color: #fff;
 }
 
 .btn-group {
@@ -212,7 +314,7 @@ header p {
 }
 
 .quick-btn {
-  padding: 5px 13px;
+  padding: 5px 12px;
   background: #e8f4fc;
   border: 1px solid var(--border);
   border-radius: 16px;
@@ -226,6 +328,20 @@ header p {
   background: var(--accent);
   color: #fff;
   border-color: var(--accent);
+}
+
+/* --- Action Toolbar --- */
+.action-toolbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: #fff;
+  border-radius: var(--radius);
+  padding: 12px 18px;
+  margin-top: 20px;
+  box-shadow: var(--shadow);
+  flex-wrap: wrap;
+  gap: 10px;
 }
 
 /* --- Map --- */
@@ -301,20 +417,37 @@ header p {
 .station-card {
   background: var(--card);
   border-radius: 12px;
-  padding: 18px;
+  padding: 16px 18px;
   margin-bottom: 14px;
-  border-left: 4px solid var(--accent);
+  border-left: 5px solid var(--accent);
+  border: 2px solid transparent;
+  border-left-width: 5px;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
-  transition: transform var(--transition);
+  cursor: pointer;
+  transition: all var(--transition);
 }
 
 .station-card:hover {
-  transform: translateX(6px);
+  transform: translateY(-2px);
+  border-color: var(--accent);
 }
 
-.station-card.nearest {
+.station-card.active-station {
+  border-color: var(--success);
   border-left-color: var(--success);
-  background: linear-gradient(135deg, #f0fff4, #e6f9ec);
+  background: linear-gradient(135deg, #f6fdf8, #eef9f2);
+  box-shadow: 0 4px 15px rgba(39, 174, 96, 0.15);
+}
+
+.station-rank-badge {
+  display: inline-block;
+  font-size: 0.76rem;
+  font-weight: 700;
+  background: #e8f4fc;
+  color: var(--primary);
+  padding: 2px 8px;
+  border-radius: 12px;
+  margin-right: 6px;
 }
 
 .station-header {
@@ -358,9 +491,9 @@ header p {
 
 .station-info {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
   gap: 10px;
-  margin-top: 12px;
+  margin-top: 10px;
 }
 
 .info-item {
@@ -382,6 +515,17 @@ header p {
   font-weight: 600;
 }
 
+.station-select-hint {
+  font-size: 0.78rem;
+  color: #666;
+  margin-top: 8px;
+  font-weight: 600;
+}
+
+.station-card.active-station .station-select-hint {
+  color: var(--success);
+}
+
 /* --- IDF Section --- */
 .idf-section {
   background: linear-gradient(135deg, #f8f9fa, #eef1f5);
@@ -401,7 +545,7 @@ header p {
 
 .equation {
   font-family: "Cambria Math", "Times New Roman", serif;
-  font-size: 1.1rem;
+  font-size: 1.15rem;
   color: var(--primary);
 }
 
@@ -458,14 +602,14 @@ header p {
 .idf-table th {
   background: var(--primary);
   color: #fff;
-  padding: 10px;
+  padding: 10px 12px;
   text-align: center;
   font-size: 0.85rem;
   font-weight: 600;
 }
 
 .idf-table td {
-  padding: 8px;
+  padding: 9px 12px;
   text-align: center;
   border-bottom: 1px solid #eee;
   font-size: 0.85rem;
@@ -482,22 +626,38 @@ header p {
 /* --- IDF Chart --- */
 .chart-container {
   position: relative;
-  height: 350px;
-  margin: 16px 0;
+  height: 380px;
+  margin: 14px 0;
   background: #fff;
   border-radius: 12px;
   padding: 16px;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
 }
 
-/* --- IDF Calculator --- */
-.calc-result {
-  background: linear-gradient(135deg, var(--success), #2ecc71);
-  color: #fff;
+.msma-tag {
+  background: #e8f4fc;
+  color: #1a5276;
+  font-size: 0.8rem;
+  font-weight: 700;
+  padding: 4px 10px;
   border-radius: 12px;
-  padding: 20px;
-  text-align: center;
-  margin-top: 16px;
+}
+
+/* --- Short Duration Badge --- */
+.short-duration-badge {
+  background: #fff8e1;
+  border: 1px solid #ffe082;
+  border-left: 5px solid #f39c12;
+  color: #b78103;
+  padding: 10px 14px;
+  border-radius: 6px;
+  font-size: 0.85rem;
+  margin-top: 12px;
+}
+
+/* --- Hydrology Calculator Result Cards Grid --- */
+.calc-result {
+  margin-top: 18px;
   display: none;
 }
 
@@ -505,14 +665,126 @@ header p {
   display: block;
 }
 
-.calc-result h3 {
-  font-size: 2rem;
-  margin: 8px 0;
+.results-cards-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
 }
 
-.calc-result p {
+@media (max-width: 768px) {
+  .results-cards-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.result-box {
+  border-radius: 12px;
+  padding: 20px;
+  color: #fff;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
+}
+
+.intensity-box {
+  background: linear-gradient(135deg, #1b74a8 0%, #2980b9 100%);
+}
+
+.rational-box {
+  background: linear-gradient(135deg, #1e824c 0%, #27ae60 100%);
+}
+
+.result-box-title {
+  font-size: 0.85rem;
+  font-weight: 700;
+  opacity: 0.95;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  margin-bottom: 6px;
+}
+
+.result-box h3 {
+  font-size: 2.1rem;
+  font-weight: 800;
+  margin: 4px 0 8px 0;
+}
+
+.result-box-sub {
+  font-size: 0.85rem;
+  opacity: 0.95;
+  line-height: 1.45;
+}
+
+.ccf-tag {
+  display: inline-block;
+  background: #e74c3c;
+  color: #fff;
+  font-size: 0.75rem;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 10px;
+  margin-left: 8px;
+  vertical-align: middle;
+}
+
+.rational-metrics-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+.rational-metric {
+  background: rgba(255, 255, 255, 0.16);
+  padding: 10px 12px;
+  border-radius: 8px;
+}
+
+.metric-label {
+  font-size: 0.72rem;
+  opacity: 0.92;
+  text-transform: uppercase;
+  font-weight: 600;
+}
+
+.metric-val {
+  font-size: 1.4rem;
+  font-weight: 800;
+  margin: 2px 0;
+}
+
+.metric-unit {
+  font-size: 0.85rem;
+  font-weight: 500;
+}
+
+.metric-sub {
+  font-size: 0.75rem;
   opacity: 0.9;
-  font-size: 0.9rem;
+}
+
+.msma-warning {
+  background: #c0392b;
+  color: #fff;
+  padding: 8px 12px;
+  border-radius: 6px;
+  font-size: 0.78rem;
+  margin-top: 10px;
+}
+
+.empty-rational-hint {
+  background: rgba(255, 255, 255, 0.12);
+  padding: 14px;
+  border-radius: 8px;
+  font-size: 0.88rem;
+  text-align: center;
+}
+
+/* --- Multi-ARI Summary Table --- */
+.badge-ccf {
+  background: #fee2e2;
+  color: #b91c1c;
+  font-weight: 700;
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-size: 0.85rem;
 }
 
 /* --- Formula Note --- */
@@ -530,6 +802,63 @@ header p {
   color: #e67e22;
 }
 
+/* --- Step-by-Step Breakdown --- */
+.breakdown-container {
+  background: #fbfcfd;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 18px;
+}
+
+.breakdown-step {
+  margin-bottom: 16px;
+  padding-bottom: 14px;
+  border-bottom: 1px solid #edf1f5;
+}
+
+.breakdown-step:last-child {
+  margin-bottom: 0;
+  padding-bottom: 0;
+  border-bottom: none;
+}
+
+.breakdown-step h4 {
+  color: var(--primary);
+  font-size: 0.95rem;
+  margin-bottom: 8px;
+}
+
+.breakdown-step p {
+  font-size: 0.85rem;
+  color: #444;
+  margin-bottom: 4px;
+  line-height: 1.55;
+}
+
+.breakdown-step code {
+  background: #edf2f7;
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-family: Consolas, monospace;
+  font-size: 0.85rem;
+  color: #2c3e50;
+}
+
+.short-step-box {
+  background: #fffde7;
+  border: 1px solid #fff59d;
+  border-radius: 8px;
+  padding: 10px 12px;
+  margin-top: 8px;
+}
+
+/* --- Site Marker Pulse --- */
+@keyframes pulseSite {
+  0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(231, 76, 60, 0.7); }
+  70% { transform: scale(1.1); box-shadow: 0 0 0 10px rgba(231, 76, 60, 0); }
+  100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(231, 76, 60, 0); }
+}
+
 /* --- Footer --- */
 footer {
   text-align: center;
@@ -541,6 +870,69 @@ footer {
 
 footer strong {
   color: var(--primary);
+}
+
+/* --- Print Stylesheet --- */
+@media print {
+  body {
+    background: #fff !important;
+    font-size: 10.5pt;
+    color: #000 !important;
+  }
+  .container {
+    max-width: 100% !important;
+    padding: 0 !important;
+  }
+  header {
+    background: none !important;
+    color: #000 !important;
+    border: 1px solid #999;
+    padding: 12px !important;
+    box-shadow: none !important;
+  }
+  header h1 {
+    font-size: 1.4rem;
+    color: #000;
+  }
+  header p {
+    color: #444;
+    font-size: 0.85rem;
+  }
+  .grid, .action-toolbar, .btn, .filter-row, #modeSwitch, .quick-locations, .search-wrapper, #map, .map-hint-text {
+    display: none !important;
+  }
+  .card {
+    box-shadow: none !important;
+    border: 1px solid #ccc !important;
+    page-break-inside: avoid;
+    margin-bottom: 14px !important;
+    padding: 14px !important;
+  }
+  .results {
+    display: block !important;
+  }
+  .chart-container {
+    height: 250px !important;
+  }
+  .result-box {
+    background: #f4f6f8 !important;
+    color: #000 !important;
+    border: 1px solid #ccc;
+    box-shadow: none !important;
+  }
+  .result-box h3 {
+    color: #000 !important;
+  }
+  .rational-metric {
+    background: #fff !important;
+    border: 1px solid #ddd;
+    color: #000 !important;
+  }
+  footer {
+    display: block !important;
+    border-top: 1px solid #ccc;
+    font-size: 0.75rem;
+  }
 }
 
 /* --- Scrollbar --- */
