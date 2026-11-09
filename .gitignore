@@ -28,3 +28,9 @@ npm-debug.log*
 # Build artifacts
 dist/
 build/
+
+# Local-only living & agent documentation (never release/commit)
+ARCHITECTURE.md
+AGENTS.md
+architecture.md
+agents.md
